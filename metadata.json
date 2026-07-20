@@ -1,0 +1,6 @@
+{
+  "name": "Interactive Prank Website",
+  "description": "A premium modern dark-themed interactive prank website that harmlessly wastes the visitor's time before a classic Rickroll reveal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

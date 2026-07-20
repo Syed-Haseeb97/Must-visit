@@ -1,0 +1,2439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quantum Neural Synchronizer</title>
+    <!-- Google Fonts: Poppins and JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Lucide Icons Script -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      :root {
+        --font-sans: 'Poppins', sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+        --bg-color: #050505;
+        --accent-cyan: #06b6d4;
+        --accent-blue: #3b82f6;
+        --accent-red: #ef4444;
+        --accent-green: #10b981;
+        --glass-bg: rgba(10, 10, 10, 0.55);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: #ffffff;
+        font-family: var(--font-sans);
+        overflow: hidden;
+        height: 100vh;
+        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      /* Background Atmosphere & Gradients */
+      .atmos-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .glow-blob-1 {
+        position: absolute;
+        top: -10%;
+        left: -10%;
+        width: 55%;
+        height: 55%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.15) 0%, transparent 70%);
+        filter: blur(80px);
+      }
+
+      .glow-blob-2 {
+        position: absolute;
+        bottom: -10%;
+        right: -10%;
+        width: 55%;
+        height: 55%;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+        filter: blur(80px);
+      }
+
+      .radial-grid-mesh {
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+        background-image: radial-gradient(#1e293b 1px, transparent 1px);
+        background-size: 24px 24px;
+      }
+
+      /* HUD Decorative Brackets */
+      .hud-bracket {
+        position: absolute;
+        width: 48px;
+        height: 48px;
+        border-color: rgba(6, 182, 212, 0.22);
+        border-style: solid;
+        pointer-events: none;
+        z-index: 5;
+        transition: opacity 0.5s ease;
+      }
+      .hud-bracket.top-left {
+        top: 32px;
+        left: 32px;
+        border-width: 1px 0 0 1px;
+      }
+      .hud-bracket.top-right {
+        top: 32px;
+        right: 32px;
+        border-width: 1px 1px 0 0;
+      }
+      .hud-bracket.bottom-left {
+        bottom: 32px;
+        left: 32px;
+        border-width: 0 0 1px 1px;
+      }
+      .hud-bracket.bottom-right {
+        bottom: 32px;
+        right: 32px;
+        border-width: 0 1px 1px 0;
+      }
+
+      /* Floating Top HUD Pill */
+      .hud-top-badge {
+        position: absolute;
+        top: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 24px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3em;
+        color: var(--accent-cyan);
+        z-index: 5;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+      }
+
+      /* Bottom Status HUD Bar */
+      .hud-bottom-bar {
+        position: absolute;
+        bottom: 32px;
+        left: 0;
+        width: 100%;
+        padding: 0 48px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        pointer-events: none;
+        z-index: 5;
+        font-family: var(--font-mono);
+      }
+      .hud-bottom-left {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .hud-bottom-label {
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: rgba(255, 255, 255, 0.35);
+      }
+      .hud-progress-track {
+        width: 128px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .hud-progress-fill {
+        height: 100%;
+        background: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 0 6px rgba(6, 182, 212, 0.5);
+      }
+      .hud-bottom-right {
+        text-align: right;
+      }
+      .hud-log-line, .hud-uptime {
+        font-size: 9px;
+        color: rgba(255, 255, 255, 0.25);
+        letter-spacing: 0.05em;
+        line-height: 1.4;
+      }
+
+      /* Background Canvas */
+      #particle-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      #confetti-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        pointer-events: none;
+      }
+
+      /* Glow Effects */
+      .glow-text {
+        text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+      }
+
+      /* Toast Notification */
+      #toast-container {
+        position: fixed;
+        top: 25px;
+        right: 25px;
+        z-index: 10001;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+      }
+
+      .toast {
+        background: rgba(15, 15, 15, 0.95);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        border-radius: 12px;
+        padding: 14px 22px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #ffffff;
+        font-weight: 500;
+        font-size: 14px;
+        pointer-events: auto;
+        transform: translateX(120%);
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s ease;
+        opacity: 0;
+        backdrop-filter: blur(8px);
+      }
+
+      .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast-danger {
+        border-color: rgba(239, 68, 68, 0.4);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 15px rgba(239, 68, 68, 0.2);
+      }
+
+      .toast-icon {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Card Flow Views */
+      .step-view {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -40%) scale(0.95);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+        width: 90%;
+        max-width: 500px;
+        z-index: 10;
+      }
+
+      .step-view.active {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Quantum Glitch Animation on Activation */
+      @keyframes quantum-glitch {
+        0% {
+          transform: translate(0, 0) skew(0deg);
+          box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+        }
+        8% {
+          transform: translate(-4px, 1px) skew(-0.8deg);
+          box-shadow: -3px 0 0 rgba(6, 182, 212, 0.45), 3px 0 0 rgba(239, 68, 68, 0.45), 0 40px 80px rgba(0, 0, 0, 0.7);
+        }
+        12% {
+          transform: translate(3px, -1px) skew(0.8deg);
+          box-shadow: 3px 0 0 rgba(6, 182, 212, 0.45), -3px 0 0 rgba(239, 68, 68, 0.45), 0 40px 80px rgba(0, 0, 0, 0.7);
+        }
+        16% {
+          transform: translate(0, 0) skew(0deg);
+          box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+        }
+        40% {
+          transform: translate(0, 0) skew(0deg);
+        }
+        44% {
+          transform: translate(-2px, 0.5px) skew(0.4deg);
+          box-shadow: -2px 0 0 rgba(6, 182, 212, 0.45), 2px 0 0 rgba(239, 68, 68, 0.45), 0 40px 80px rgba(0, 0, 0, 0.7);
+        }
+        48% {
+          transform: translate(0, 0) skew(0deg);
+          box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+        }
+        100% {
+          transform: translate(0, 0) skew(0deg);
+        }
+      }
+
+      @keyframes text-glitch {
+        0% {
+          text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        8% {
+          text-shadow: -2.5px 0 rgba(239, 68, 68, 0.8), 2.5px 0 rgba(6, 182, 212, 0.8), 0 0 15px rgba(6, 182, 212, 0.6);
+        }
+        12% {
+          text-shadow: 2.5px 0 rgba(239, 68, 68, 0.8), -2.5px 0 rgba(6, 182, 212, 0.8), 0 0 15px rgba(6, 182, 212, 0.6);
+        }
+        16% {
+          text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        40% {
+          text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        44% {
+          text-shadow: -1.5px 0 rgba(239, 68, 68, 0.8), 1.5px 0 rgba(6, 182, 212, 0.8), 0 0 15px rgba(6, 182, 212, 0.6);
+        }
+        48% {
+          text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        100% {
+          text-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+      }
+
+      .step-view.active .glass-card {
+        animation: quantum-glitch 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+      }
+
+      .step-view.active .glow-text {
+        animation: text-glitch 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+      }
+
+      /* Glassmorphism Card Style */
+      .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        border: 1px solid var(--glass-border);
+        border-radius: 40px;
+        padding: 48px;
+        width: 100%;
+        box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Card Border Ambient Glow Line */
+      .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-blue), transparent);
+        opacity: 0.8;
+      }
+
+      /* Typography */
+      h1 {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 8px;
+        background: linear-gradient(135deg, #ffffff 0%, #b5b5b5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .subtitle {
+        font-size: 15px;
+        color: #aaaaaa;
+        font-weight: 400;
+        line-height: 1.5;
+        margin-bottom: 30px;
+      }
+
+      /* Realistic Progress Loading Bar */
+      .progress-container {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        margin-bottom: 20px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);
+        transition: width 0.15s ease;
+      }
+
+      .progress-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      #progress-text {
+        color: var(--accent-cyan);
+        text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+      }
+
+      #loading-message {
+        font-size: 13px;
+        color: #777777;
+        font-weight: 400;
+        height: 20px;
+        transition: opacity 0.2s ease;
+      }
+
+      /* Glowing Action Button */
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+        color: #ffffff;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 42px;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.4);
+        transition: box-shadow 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 20;
+      }
+
+      .btn-primary:hover {
+        box-shadow: 0 0 35px rgba(6, 182, 212, 0.8), 0 0 55px rgba(59, 130, 246, 0.5);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+
+      /* Escaping Button State (Step 3) */
+      .btn-escaping {
+        position: fixed !important;
+        margin: 0 !important;
+        transition: left 0.18s cubic-bezier(0.25, 1, 0.5, 1), top 0.18s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        z-index: 10000 !important;
+      }
+
+      /* Special Golden/Green glow when capturing is complete */
+      .btn-captured {
+        background: linear-gradient(135deg, var(--accent-green), #059669) !important;
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.8), 0 0 50px rgba(16, 185, 129, 0.4) !important;
+        animation: pulse-border 1.5s infinite alternate !important;
+      }
+
+      @keyframes pulse-border {
+        0% { transform: scale(1); box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+        100% { transform: scale(1.05); box-shadow: 0 0 35px rgba(16, 185, 129, 0.9); }
+      }
+
+      /* Stats Area (Step 3 Display or Card) */
+      .escape-status-card {
+        margin-top: 25px;
+        padding-top: 25px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .escape-count-label {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 6px;
+      }
+
+      .escape-progress-outer {
+        width: 100%;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .escape-progress-inner {
+        width: 0%;
+        height: 100%;
+        background: var(--accent-cyan);
+        border-radius: 4px;
+        box-shadow: 0 0 8px var(--accent-cyan);
+        transition: width 0.3s ease;
+      }
+
+      /* Spinner (Step 4) */
+      .spinner-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 30px 0;
+      }
+
+      .spinner {
+        width: 65px;
+        height: 65px;
+        border: 4px solid rgba(6, 182, 212, 0.08);
+        border-left-color: var(--accent-cyan);
+        border-radius: 50%;
+        animation: spin 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+        margin-bottom: 25px;
+        filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4));
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Reveal Stats (Step 5) */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin: 25px 0;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        border-radius: 16px;
+        padding: 14px;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .stat-card.full-width {
+        grid-column: span 2;
+        background: linear-gradient(90deg, rgba(239, 68, 68, 0.04), rgba(239, 68, 68, 0.01));
+        border: 1px solid rgba(239, 68, 68, 0.1);
+      }
+
+      .stat-value {
+        font-family: var(--font-mono);
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--accent-cyan);
+        text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: #888888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 5px;
+      }
+
+      .text-red {
+        color: var(--accent-red) !important;
+        text-shadow: 0 0 10px rgba(239, 68, 68, 0.3) !important;
+      }
+
+      /* Achievement Badge Styling */
+      .achievement-badge {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        border-radius: 18px;
+        padding: 16px 20px;
+        margin: 20px auto;
+        max-width: 100%;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.05);
+        animation: pulse-glow 2s infinite alternate;
+      }
+
+      @keyframes pulse-glow {
+        from {
+          box-shadow: 0 0 15px rgba(6, 182, 212, 0.05);
+          border-color: rgba(6, 182, 212, 0.25);
+        }
+        to {
+          box-shadow: 0 0 25px rgba(6, 182, 212, 0.2);
+          border-color: rgba(6, 182, 212, 0.45);
+        }
+      }
+
+      .badge-icon {
+        font-size: 34px;
+        margin-right: 18px;
+        filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+      }
+
+      .badge-info {
+        text-align: left;
+      }
+
+      .badge-title {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--accent-cyan);
+      }
+
+      .badge-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+      }
+
+      /* Video Embed Player Section */
+      .video-wrapper {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%; /* 16:9 ratio */
+        background: #111111;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 25px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(6, 182, 212, 0.15);
+        transition: box-shadow 0.3s ease;
+      }
+
+      .video-wrapper:hover {
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(6, 182, 212, 0.3);
+      }
+
+      .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: linear-gradient(135deg, rgba(15, 15, 15, 0.95) 0%, rgba(20, 20, 20, 0.95) 100%);
+        transition: background 0.3s ease;
+        z-index: 15;
+      }
+
+      .video-overlay:hover {
+        background: linear-gradient(135deg, rgba(10, 10, 10, 0.85) 0%, rgba(18, 18, 18, 0.85) 100%);
+      }
+
+      .play-icon-glow {
+        width: 75px;
+        height: 75px;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+        margin-bottom: 14px;
+      }
+
+      .video-overlay:hover .play-icon-glow {
+        transform: scale(1.1);
+        box-shadow: 0 0 35px rgba(6, 182, 212, 0.8), 0 0 50px rgba(59, 130, 246, 0.4);
+      }
+
+      .play-icon-svg {
+        margin-left: 4px;
+        fill: #ffffff;
+      }
+
+      .play-text {
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        color: #ffffff;
+        text-transform: uppercase;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .share-section {
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .share-label {
+        font-size: 13px;
+        color: #888888;
+        font-weight: 500;
+        margin-bottom: 12px;
+        display: block;
+      }
+
+      /* Quiz Option Buttons */
+      .quiz-option-btn {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 14px;
+        padding: 14px 18px;
+        font-size: 13px;
+        color: #cccccc;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        font-family: var(--font-sans);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        outline: none;
+      }
+
+      .quiz-option-btn:hover {
+        background: rgba(6, 182, 212, 0.08);
+        border-color: rgba(6, 182, 212, 0.35);
+        color: #ffffff;
+        transform: translateX(6px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.1);
+      }
+
+      .quiz-option-btn:active {
+        transform: translateX(3px);
+      }
+
+      .quiz-option-letter {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 11px;
+        color: var(--accent-cyan);
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 6px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      /* Screen Shake Animation */
+      @keyframes shake {
+        0%, 100% { transform: translate(0, 0); }
+        10%, 30%, 50%, 70%, 90% { transform: translate(-3px, 2px); }
+        20%, 40%, 60%, 80% { transform: translate(3px, -2px); }
+      }
+
+      .shake {
+        animation: shake 0.3s ease-in-out;
+      }
+
+      /* Reveal Card Expanded Heights override */
+      #step-reveal .glass-card {
+        max-width: 580px;
+        max-height: 95vh;
+        overflow-y: auto;
+        padding: 30px;
+      }
+
+      /* Scrollbar Styling for scrollable containers */
+      #step-reveal .glass-card::-webkit-scrollbar {
+        width: 6px;
+      }
+      #step-reveal .glass-card::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #step-reveal .glass-card::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+      }
+      #step-reveal .glass-card::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      /* Mobile adjustments */
+      @media(max-width: 768px) {
+        .hud-bracket {
+          opacity: 0.3;
+          width: 24px;
+          height: 24px;
+        }
+        .hud-bracket.top-left { top: 16px; left: 16px; }
+        .hud-bracket.top-right { top: 16px; right: 16px; }
+        .hud-bracket.bottom-left { bottom: 16px; left: 16px; }
+        .hud-bracket.bottom-right { bottom: 16px; right: 16px; }
+        .hud-top-badge {
+          top: 16px;
+          padding: 6px 16px;
+          font-size: 8px;
+        }
+        .hud-bottom-bar {
+          padding: 0 16px;
+          bottom: 16px;
+        }
+        .hud-progress-track {
+          width: 80px;
+        }
+      }
+
+      @media(max-width: 550px) {
+        .glass-card {
+          padding: 32px 24px;
+          border-radius: 28px;
+        }
+        .hud-bracket, .hud-top-badge, .hud-bottom-bar {
+          display: none !important;
+        }
+        h1 {
+          font-size: 24px;
+        }
+        .subtitle {
+          font-size: 13px;
+          margin-bottom: 20px;
+        }
+        .btn-primary {
+          padding: 12px 32px;
+          font-size: 14px;
+        }
+        .stat-value {
+          font-size: 18px;
+        }
+        .stat-label {
+          font-size: 10px;
+        }
+        .achievement-badge {
+          padding: 12px 15px;
+        }
+        .badge-icon {
+          font-size: 28px;
+          margin-right: 12px;
+        }
+        .badge-name {
+          font-size: 14px;
+        }
+      }
+
+      /* Intro Name Input styling */
+      .intro-input {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 16px 20px;
+        font-size: 15px;
+        color: #ffffff;
+        width: 100%;
+        outline: none;
+        transition: all 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+        font-family: var(--font-sans);
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .intro-input:focus {
+        background: rgba(6, 182, 212, 0.04);
+        border-color: rgba(6, 182, 212, 0.4);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+      }
+      .intro-input::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      .intro-error {
+        color: var(--accent-red);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        margin-top: 4px;
+        min-height: 18px;
+        text-align: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      .intro-error.show {
+        opacity: 1;
+      }
+      .btn-primary:disabled {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        opacity: 0.5;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Atmospheric Background Gradients & Mesh -->
+    <div class="atmos-bg">
+      <div class="glow-blob-1"></div>
+      <div class="glow-blob-2"></div>
+      <div class="radial-grid-mesh"></div>
+    </div>
+
+    <!-- HUD Brackets -->
+    <div class="hud-bracket top-left"></div>
+    <div class="hud-bracket top-right"></div>
+    <div class="hud-bracket bottom-left"></div>
+    <div class="hud-bracket bottom-right"></div>
+
+    <!-- HUD Top Badge -->
+    <div class="hud-top-badge">System Status: SYNCHRONIZED // Premium UI</div>
+
+    <!-- HUD Bottom Bar -->
+    <div class="hud-bottom-bar">
+      <div class="hud-bottom-left">
+        <span class="hud-bottom-label">Neural Channel Integrity</span>
+        <div class="hud-progress-track">
+          <div class="hud-progress-fill" style="width: 89%;"></div>
+        </div>
+      </div>
+      <div class="hud-bottom-right">
+        <div class="hud-log-line">LOG: PORT_3000_INGRESS... SAFE</div>
+        <div class="hud-uptime" id="hud-uptime-ticker">Uptime: 00:00:00</div>
+      </div>
+    </div>
+
+    <!-- Background Particles -->
+    <canvas id="particle-canvas"></canvas>
+    
+    <!-- Congratulations Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Toast Notification Overlay Container -->
+    <div id="toast-container"></div>
+
+    <!-- STEP 0: Intro Screen -->
+    <div id="step-intro" class="step-view active">
+      <div class="glass-card">
+        <h1 class="glow-text">Welcome! 👋</h1>
+        <p class="subtitle">Enter your name to begin the experience.</p>
+        
+        <div style="margin-bottom: 24px; position: relative; width: 100%;">
+          <input 
+            type="text" 
+            id="intro-name-input" 
+            placeholder="Your name..." 
+            class="intro-input" 
+            maxlength="30"
+            autocomplete="off"
+          />
+          <div id="intro-error-msg" class="intro-error"></div>
+        </div>
+
+        <button id="intro-start-btn" class="btn-primary" disabled style="width: 100%; justify-content: center;">
+          Start
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 1: Boot Screen -->
+    <div id="step-boot" class="step-view">
+      <div class="glass-card">
+        <h1 class="glow-text">Initializing...</h1>
+        <p class="subtitle">Preparing your exclusive experience...</p>
+        
+        <div class="progress-meta">
+          <span>PROGRESS</span>
+          <span id="progress-text">0%</span>
+        </div>
+        <div class="progress-container">
+          <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        
+        <div id="loading-message">Connecting to satellites...</div>
+      </div>
+    </div>
+
+    <!-- STEP 1.5: Fake Verification Quiz Screen -->
+    <div id="step-verification" class="step-view">
+      <div class="glass-card">
+        <h1 class="glow-text" style="font-size: 26px; margin-bottom: 6px;">Final Verification Required</h1>
+        <p class="subtitle" style="font-size: 13px; margin-bottom: 20px;">Please answer these important questions before continuing.</p>
+        
+        <!-- Question block -->
+        <div id="quiz-container">
+          <div style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-cyan); letter-spacing: 2px; margin-bottom: 12px; text-transform: uppercase;" id="quiz-progress-label">QUESTION 1 OF 12</div>
+          <div id="quiz-question-text" style="font-size: 17px; font-weight: 600; margin-bottom: 24px; min-height: 50px; line-height: 1.4; color: #ffffff;">Which dinosaur would make the best accountant?</div>
+          
+          <div id="quiz-options" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px;">
+            <!-- Options will be dynamically populated here -->
+          </div>
+        </div>
+
+        <!-- Analyzing block (hidden by default) -->
+        <div id="quiz-analyzing" style="display: none; min-height: 180px; flex-direction: column; justify-content: center; align-items: center; gap: 16px;">
+          <div class="spinner"></div>
+          <p id="quiz-analyzing-text" style="font-size: 13px; font-family: var(--font-mono); color: var(--accent-cyan); letter-spacing: 1px; text-transform: uppercase; animation: pulse-border 1s infinite alternate;">ANALYZING RESPONSE...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 & 3: Continue & Escaping Button Screen -->
+    <div id="step-main" class="step-view">
+      <div class="glass-card">
+        <h1 id="main-title" class="glow-text">Success!</h1>
+        <p id="main-subtitle" class="subtitle">Everything is ready.</p>
+        
+        <!-- Center anchor for the button (initially contains it, then it snaps to fixed position) -->
+        <div style="min-height: 55px; display: flex; align-items: center; justify-content: center; position: relative;" id="button-anchor">
+          <button id="escaping-btn" class="btn-primary">
+            Continue <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Escape Stat Tracker (reveals once the button breaks loose) -->
+        <div id="escape-status" class="escape-status-card" style="opacity: 0; transition: opacity 0.4s ease; display: none;">
+          <div class="escape-count-label">CAPTURE DEFLECTION METERS</div>
+          <div class="escape-progress-outer">
+            <div id="escape-progress-bar" class="escape-progress-inner"></div>
+          </div>
+          <div style="font-family: var(--font-mono); font-size: 11px; color: #888; display: flex; justify-content: space-between;">
+            <span id="escape-count-label">Escapes: 0/25</span>
+            <span id="patience-countdown">Patience: 100%</span>
+          </div>
+          <div id="bonus-troll-tip" style="color: var(--accent-cyan); font-size: 12px; font-weight: 600; margin-top: 10px; display: none; animation: pulse-border 1s infinite alternate;">
+            Tip: Double tap the button 😉
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Fake Reward loading screen -->
+    <div id="step-reward" class="step-view">
+      <div class="glass-card">
+        <h1 class="glow-text" style="font-size: 26px; margin-bottom: 6px;">Preparing your exclusive reward...</h1>
+        <p class="subtitle" id="reward-subtitle" style="font-size: 13px; margin-bottom: 24px;">Unwrapping package and allocating resources...</p>
+        
+        <div class="progress-meta">
+          <span>DECRYPTION PROGRESS</span>
+          <span id="reward-progress-text">0%</span>
+        </div>
+        <div class="progress-container">
+          <div id="reward-progress-bar" class="progress-bar"></div>
+        </div>
+        
+        <div id="reward-loading-message" style="font-size: 12px; color: var(--accent-cyan); font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; min-height: 20px;">Wrapping surprise...</div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Final Reveal Screen -->
+    <div id="step-reveal" class="step-view">
+      <div class="glass-card">
+        <h1 class="glow-text">🎉 Congratulations!</h1>
+        <p class="subtitle" style="margin-bottom: 15px;">You have successfully wasted your time.</p>
+
+        <!-- Achievement -->
+        <div class="achievement-badge">
+          <div class="badge-icon">🏆</div>
+          <div class="badge-info">
+            <div class="badge-title">ACHIEVEMENT UNLOCKED</div>
+            <div class="badge-name">Professional Time Waster</div>
+          </div>
+        </div>
+
+        <!-- Live Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-wasted">0.0s</div>
+            <div class="stat-label">Time Wasted</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-questions">0</div>
+            <div class="stat-label">Questions Answered</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-messages">0</div>
+            <div class="stat-label">Loading Messages Seen</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-failed-clicks">0</div>
+            <div class="stat-label">Failed Button Clicks</div>
+          </div>
+          <div class="stat-card full-width">
+            <div class="stat-value text-red" id="stat-patience-left">100%</div>
+            <div class="stat-label">Patience Remaining</div>
+          </div>
+        </div>
+
+        <!-- YouTube Video Frame Wrapper -->
+        <div class="video-wrapper">
+          <div class="video-overlay" id="video-play-btn" onclick="playVideo()">
+            <div class="play-icon-glow">
+              <svg class="play-icon-svg" viewBox="0 0 24 24" width="34" height="34">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+            <span class="play-text">▶ Play Your Reward</span>
+          </div>
+          <div id="player-iframe-container"></div>
+        </div>
+
+        <!-- Prank Copy URL sharing block -->
+        <div class="share-section">
+          <span class="share-label">Share this with your next victim 😈</span>
+          <button class="btn-primary" onclick="copyToClipboard()">
+            <i data-lucide="share-2"></i> Prank Someone Else
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Script Section -->
+    <script>
+      // Initialize Lucide icons
+      lucide.createIcons();
+
+      // ----------------------------------------------------
+      // AUDIO CONTROLLER (Web Audio API Synthesizer)
+      // ----------------------------------------------------
+      const AudioController = {
+        ctx: null,
+        init() {
+          if (this.ctx) return;
+          try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+          } catch (e) {
+            console.error("Web Audio API not supported", e);
+          }
+        },
+        playClick() {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.08);
+          
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+          
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.08);
+        },
+        playWhoosh() {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(650, this.ctx.currentTime + 0.22);
+          
+          gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.14, this.ctx.currentTime + 0.06);
+          gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.22);
+          
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.22);
+        },
+        playSuccess() {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          // Arpeggio notes: C4, E4, G4, C5
+          const notes = [261.63, 329.63, 392.00, 523.25];
+          notes.forEach((freq, index) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, now + index * 0.08);
+            
+            gain.gain.setValueAtTime(0, now + index * 0.08);
+            gain.gain.linearRampToValueAtTime(0.12, now + index * 0.08 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.35);
+            
+            osc.start(now + index * 0.08);
+            osc.stop(now + index * 0.08 + 0.35);
+          });
+        },
+        playConfetti() {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          
+          // Generate white noise sound buffer for pop
+          const bufferSize = this.ctx.sampleRate * 0.15;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+          
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = buffer;
+          
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(450, now);
+          filter.frequency.exponentialRampToValueAtTime(90, now + 0.15);
+          
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+          
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+          
+          noise.start(now);
+          noise.stop(now + 0.15);
+        }
+      };
+
+      // ----------------------------------------------------
+      // BACKGROUND PARTICLE SYSTEM (Canvas 60fps)
+      // ----------------------------------------------------
+      const ParticleSystem = {
+        canvas: null,
+        ctx: null,
+        particles: [],
+        animationId: null,
+        init(canvasId) {
+          this.canvas = document.getElementById(canvasId);
+          this.ctx = this.canvas.getContext('2d');
+          this.resize();
+          window.addEventListener('resize', () => this.resize());
+          this.createParticles();
+          this.animate();
+        },
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+        },
+        createParticles() {
+          const count = Math.min(60, Math.floor((window.innerWidth * window.innerHeight) / 22000));
+          this.particles = [];
+          for (let i = 0; i < count; i++) {
+            this.particles.push({
+              x: Math.random() * this.canvas.width,
+              y: Math.random() * this.canvas.height,
+              vx: (Math.random() - 0.5) * 0.3,
+              vy: (Math.random() - 0.5) * 0.3,
+              radius: Math.random() * 2 + 1,
+              color: Math.random() > 0.5 ? 'rgba(6, 182, 212, 0.35)' : 'rgba(59, 130, 246, 0.35)'
+            });
+          }
+        },
+        animate() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          const len = this.particles.length;
+          for (let i = 0; i < len; i++) {
+            const p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            
+            if (p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = p.color;
+            this.ctx.fill();
+            
+            for (let j = i + 1; j < len; j++) {
+              const p2 = this.particles[j];
+              const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+              if (dist < 110) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.x, p.y);
+                this.ctx.lineTo(p2.x, p2.y);
+                this.ctx.strokeStyle = `rgba(6, 182, 212, ${0.1 * (1 - dist / 110)})`;
+                this.ctx.lineWidth = 0.5;
+                this.ctx.stroke();
+              }
+            }
+          }
+          this.animationId = requestAnimationFrame(() => this.animate());
+        }
+      };
+
+      // ----------------------------------------------------
+      // CONFETTI BURST SYSTEM
+      // ----------------------------------------------------
+      const ConfettiSystem = {
+        canvas: null,
+        ctx: null,
+        particles: [],
+        animationId: null,
+        active: false,
+        init(canvasId) {
+          this.canvas = document.getElementById(canvasId);
+          this.ctx = this.canvas.getContext('2d');
+          this.resize();
+          window.addEventListener('resize', () => this.resize());
+        },
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+        },
+        burst() {
+          this.active = true;
+          const colors = ['#06b6d4', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+          this.particles = [];
+          for (let i = 0; i < 140; i++) {
+            this.particles.push({
+              x: window.innerWidth / 2,
+              y: window.innerHeight / 2 - 80,
+              vx: (Math.random() - 0.5) * 16,
+              vy: (Math.random() - 0.7) * 16,
+              size: Math.random() * 8 + 5,
+              color: colors[Math.floor(Math.random() * colors.length)],
+              rotation: Math.random() * Math.PI * 2,
+              rotationSpeed: (Math.random() - 0.5) * 0.25,
+              opacity: 1,
+              gravity: 0.28,
+              drag: 0.985
+            });
+          }
+          AudioController.playConfetti();
+          this.animate();
+        },
+        animate() {
+          if (!this.active) return;
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          let alive = false;
+          for (let i = 0; i < this.particles.length; i++) {
+            const p = this.particles[i];
+            if (p.opacity <= 0) continue;
+            
+            alive = true;
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+            p.vy += p.gravity;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += p.rotationSpeed;
+            p.opacity -= 0.009;
+            
+            this.ctx.save();
+            this.ctx.translate(p.x, p.y);
+            this.ctx.rotate(p.rotation);
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = Math.max(0, p.opacity);
+            this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            this.ctx.restore();
+          }
+          if (alive) {
+            this.animationId = requestAnimationFrame(() => this.animate());
+          } else {
+            this.active = false;
+          }
+        }
+      };
+
+      // ----------------------------------------------------
+      // TOAST SYSTEM
+      // ----------------------------------------------------
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type === 'danger' ? 'toast-danger' : ''}`;
+        toast.innerHTML = `
+          <span class="toast-icon">${type === 'danger' ? '😈' : '✨'}</span>
+          <span class="toast-text">${message}</span>
+        `;
+        container.appendChild(toast);
+        
+        // Trigger entrance animation
+        setTimeout(() => toast.classList.add('show'), 15);
+        
+        // Remove toast
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 400);
+        }, 3000);
+      }
+
+      // ----------------------------------------------------
+      // CORE FLOW STATE MANAGERS
+      // ----------------------------------------------------
+      let visitorName = "Friend";
+      const pageLoadTime = Date.now();
+      let bootStartTime = Date.now();
+      let bootEndTime = null;
+      let clickFinishedTime = null;
+      let currentStep = 'intro'; // 'intro', 'boot', 'verification', 'main', 'reward', 'reveal'
+
+      const loadingMessages = [
+        "Connecting to satellites...",
+        "Downloading more RAM...",
+        "Verifying human...",
+        "Verifying you're not a potato...",
+        "Contacting NASA...",
+        "Contacting Mars...",
+        "Mars didn't answer.",
+        "Asking Google for permission...",
+        "Loading patience...",
+        "Calibrating funny meter...",
+        "Charging hamsters...",
+        "Polishing pixels...",
+        "Synchronizing moonlight...",
+        "Looking for motivation...",
+        "Rendering absolutely nothing...",
+        "Generating fake progress...",
+        "Reticulating splines...",
+        "Organizing electrons...",
+        "Finding missing socks...",
+        "Installing confidence...",
+        "Compressing boredom...",
+        "Calculating your luck...",
+        "Calculating your patience...",
+        "Recalculating because math is hard...",
+        "Checking browser history...",
+        "Pretending to work...",
+        "Convincing the progress bar...",
+        "Searching for Wi-Fi in space...",
+        "Making coffee...",
+        "Coffee wasn't enough...",
+        "Brewing another coffee...",
+        "Loading memes...",
+        "Filtering bad jokes...",
+        "Almost there...",
+        "Just one more thing...",
+        "Wait...",
+        "Never mind...",
+        "Fixing imaginary bugs...",
+        "Feeding the server...",
+        "Server is still hungry...",
+        "Stretching bytes...",
+        "Teaching AI to dance...",
+        "Optimizing optimism...",
+        "Looking busy...",
+        "Still looking busy...",
+        "This is taking longer than expected...",
+        "This is definitely normal...",
+        "Don't refresh...",
+        "Please don't refresh...",
+        "Seriously, don't refresh...",
+        "Reading your aura...",
+        "Detecting good vibes...",
+        "Measuring excitement...",
+        "Warming up buttons...",
+        "Charging animation engine...",
+        "Verifying gravity...",
+        "Installing common sense...",
+        "Oops, installation failed...",
+        "Retrying...",
+        "Retry successful.",
+        "Updating absolutely nothing...",
+        "Counting to a really big number...",
+        "Folding space-time...",
+        "Untangling spaghetti code...",
+        "Loading dramatic music...",
+        "Waiting for inspiration...",
+        "Creating suspense...",
+        "Building anticipation...",
+        "Almost ready...",
+        "Almost almost ready...",
+        "Finalizing...",
+        "Finalizing the finalization...",
+        "Triple-checking...",
+        "Double-checking...",
+        "One last check...",
+        "Maybe one more...",
+        "Definitely almost done...",
+        "You made it this far...",
+        "We're impressed.",
+        "Still reading these?",
+        "Definitely not wasting your time...",
+        "Loading because why not...",
+        "If you're still here, you're committed.",
+        "Achievement: Patience Level 1.",
+        "Achievement: Still Waiting.",
+        "Achievement: You Trust Websites Too Much."
+      ];
+
+      const escapeMessages = [
+        "Nice try 😏",
+        "Too slow.",
+        "Catch me.",
+        "Skill issue.",
+        "Keep trying.",
+        "Almost.",
+        "Not today.",
+        "Mission impossible.",
+        "Nope.",
+        "You're getting closer.",
+        "One more try.",
+        "I believe in you.",
+        "Missed again.",
+        "Faster!",
+        "404 Click Not Found.",
+        "You can do it.",
+        "That was close.",
+        "Oops.",
+        "Nearly.",
+        "Try harder.",
+        "You blinked.",
+        "Again?",
+        "That was funny.",
+        "Not even close.",
+        "Persistence is impressive."
+      ];
+
+      // Switch screen view helper
+      function setStepView(stepName) {
+        document.querySelectorAll('.step-view').forEach(view => {
+          view.classList.remove('active');
+        });
+        const targetView = document.getElementById(`step-${stepName}`);
+        if (targetView) {
+          targetView.classList.add('active');
+          currentStep = stepName;
+        }
+
+        // Hide or show the escaping button depending on active step
+        if (stepName !== 'main') {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+        }
+      }
+
+      // ----------------------------------------------------
+      // SYSTEM & STAGE VARIABLES
+      // ----------------------------------------------------
+      let currentProgress = 0;
+      let totalMessagesSeen = 0;
+      let pauseRemainingMs = 0;
+      let tickCount = 0;
+
+      // 1. Boot Progress Runner
+      function runLoader() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        // Check if we are finished
+        if (currentProgress >= 100) {
+          progressBar.style.width = '100%';
+          progressText.innerText = '100%';
+          finishLoading();
+          return;
+        }
+
+        // Check if we are in a pause state
+        if (pauseRemainingMs > 0) {
+          pauseRemainingMs -= 400;
+          tickCount++;
+          // Still update messages sometimes during pause (every 2.4 seconds = 6 ticks)
+          if (tickCount % 6 === 0) {
+            updateLoadingMessage();
+          }
+          setTimeout(runLoader, 400);
+          return;
+        }
+
+        // Not paused, let's process the progress update
+        tickCount++;
+
+        // Random chance of initiating a pause (between 15% and 85% progress)
+        if (currentProgress > 15 && currentProgress < 85 && Math.random() < 0.025) {
+          // Pause for 3000ms to 8000ms
+          const pauseSecs = 3 + Math.floor(Math.random() * 6); // 3 to 8 seconds
+          pauseRemainingMs = pauseSecs * 1000;
+          updateLoadingMessage(); // Force update message on pause
+          setTimeout(runLoader, 400);
+          return;
+        }
+
+        // Random chance of going backwards (between 10% and 90% progress)
+        if (currentProgress > 10 && currentProgress < 90 && Math.random() < 0.02) {
+          const slip = 1 + Math.random() * 2; // 1% to 3%
+          currentProgress = Math.max(1, currentProgress - slip);
+          showToast("Connection packet slip detected! Synchronizing...", "info");
+        }
+        // Random chance of jump forward (under 85% progress)
+        else if (currentProgress < 85 && Math.random() < 0.025) {
+          const jump = 5 + Math.random() * 5; // 5% to 10%
+          currentProgress = Math.min(95, currentProgress + jump);
+        }
+        // Normal crawling increment
+        else {
+          let increment = 0.2 + Math.random() * 1.0; // slow progress
+          // Slow down even more near the end
+          if (currentProgress >= 90) {
+            increment = 0.05 + Math.random() * 0.25;
+          }
+          currentProgress += increment;
+        }
+
+        // Cap at 99.9% until finished
+        if (currentProgress > 99.9) {
+          currentProgress = 99.9;
+        }
+
+        // Extreme patience threshold - force 100% after 220 ticks to ensure it doesn't run forever
+        if (tickCount > 220) {
+          currentProgress = 100;
+        }
+
+        progressBar.style.width = `${currentProgress.toFixed(1)}%`;
+        progressText.innerText = `${currentProgress.toFixed(1)}%`;
+
+        // Update loading message every 2.4 seconds (6 ticks)
+        if (tickCount % 6 === 0 || tickCount === 1) {
+          updateLoadingMessage();
+        }
+
+        setTimeout(runLoader, 400);
+      }
+
+      function updateLoadingMessage() {
+        const msgEl = document.getElementById('loading-message');
+        if (!msgEl) return;
+        
+        const idx = Math.floor(Math.random() * loadingMessages.length);
+        const selectedMsg = loadingMessages[idx];
+        totalMessagesSeen++;
+        
+        msgEl.style.opacity = 0;
+        setTimeout(() => {
+          msgEl.innerText = selectedMsg;
+          msgEl.style.opacity = 1;
+        }, 150);
+      }
+
+      function finishLoading() {
+        bootEndTime = Date.now();
+        AudioController.playSuccess();
+        
+        // Transition Step 1 -> Step 1.5 (Verification Quiz)
+        setTimeout(() => {
+          setStepView('verification');
+          initQuiz();
+        }, 500);
+      }
+
+      // ----------------------------------------------------
+      // STAGE 2 — FAKE VERIFICATION QUIZ LOGIC
+      // ----------------------------------------------------
+      const quizQuestions = [
+        {
+          q: "Which dinosaur would make the best accountant?",
+          options: [
+            "Velociraptor (highly efficient but eats clients)",
+            "Triceratops (very stable, excellent at balancing files)",
+            "T-Rex (has trouble reaching the calculator)",
+            "Stegosaurus (a bit slow, still uses paper files)"
+          ]
+        },
+        {
+          q: "If bread could talk, what accent would it have?",
+          options: [
+            "Elegant French (obviously)",
+            "Sourdough San Franciscan",
+            "High-society British",
+            "Soft-spoken Italian"
+          ]
+        },
+        {
+          q: "What's the best shape for a cloud?",
+          options: [
+            "Exactly a duck",
+            "Perfect square (suspiciously matrix-like)",
+            "Potato shape (classic)",
+            "Cotton candy swirl"
+          ]
+        },
+        {
+          q: "Would you rather fight one horse-sized duck or 100 duck-sized horses?",
+          options: [
+            "One giant duck (aim for the beak!)",
+            "100 tiny horses (adorable but chaotic)",
+            "Neither, I want to ride the giant duck",
+            "Can I negotiate peace with them?"
+          ]
+        },
+        {
+          q: "How many penguins could fit in a shopping cart?",
+          options: [
+            "Exactly 7 (comfortably)",
+            "15 if we stack them like groceries",
+            "42 (if we use quantum compression)",
+            "None, they would run away"
+          ]
+        },
+        {
+          q: "If bananas were blue, would cereal taste different?",
+          options: [
+            "Yes, blue food is scientifically tastier",
+            "No, but the milk would look alien",
+            "Only on alternate Tuesdays",
+            "Bananas aren't real, anyway"
+          ]
+        },
+        {
+          q: "Which is faster: Monday or Tuesday?",
+          options: [
+            "Monday (zooms past in a blur of meetings)",
+            "Tuesday (slowly drags its feet)",
+            "They both tie at the speed of boredom",
+            "Thursday is secretly winning"
+          ]
+        },
+        {
+          q: "Can cereal be soup?",
+          options: [
+            "Yes, it has milk broth and grain solids",
+            "No, soup is sacred",
+            "Only if you eat it hot (monstrous!)",
+            "It's a breakfast salad"
+          ]
+        },
+        {
+          q: "What's the best pizza topping for astronauts?",
+          options: [
+            "Freeze-dried pepperoni",
+            "Pure floating liquid cheese",
+            "Dehydrated pineapple (space pineapple!)",
+            "Asteroid dust for crunch"
+          ]
+        },
+        {
+          q: "If Wi-Fi had a smell, what would it smell like?",
+          options: [
+            "Freshly burnt toast",
+            "Rain on hot pavement",
+            "Smug satisfaction",
+            "Dusty books and copper coins"
+          ]
+        },
+        {
+          q: "Which emoji pays taxes?",
+          options: [
+            "💼 (The taxman)",
+            "🧾 (Receipt emoji)",
+            "🤡 (All of us)",
+            "🧐 (The auditor)"
+          ]
+        },
+        {
+          q: "If cats ruled the world, what would be illegal?",
+          options: [
+            "Closed doors",
+            "Vacuums of any kind",
+            "Eating before 5:00 AM (owner's sleep is banned)",
+            "Not scratching behind the ears"
+          ]
+        },
+        {
+          q: "Which fruit would win a marathon?",
+          options: [
+            "Banana (excellent peel power)",
+            "Strawberry (small but aerodynamic)",
+            "Watermelon (sheer momentum)",
+            "Coconut (unstoppable roller)"
+          ]
+        },
+        {
+          q: "Which planet would throw the best party?",
+          options: [
+            "Saturn (amazing rings)",
+            "Jupiter (plenty of space, big storm beats)",
+            "Neptune (cool blue theme)",
+            "Mars (red hot dancefloor)"
+          ]
+        },
+        {
+          q: "If your shadow had a favorite song, what would it be?",
+          options: [
+            "'Shadow Dancing'",
+            "'Hello Darkness My Old Friend'",
+            "'Dancing in the Dark'",
+            "'Never Gonna Give You Up' (foreshadowing!)"
+          ]
+        }
+      ];
+
+      let selectedQuizQuestions = [];
+      let currentQuestionIndex = 0;
+      let totalQuestionsAnswered = 0;
+
+      function initQuiz() {
+        const shuffled = [...quizQuestions].sort(() => Math.random() - 0.5);
+        // Randomize questions each visit - select 12 of them
+        selectedQuizQuestions = shuffled.slice(0, 12);
+        currentQuestionIndex = 0;
+        totalQuestionsAnswered = 0;
+        showQuestion();
+      }
+
+      function showQuestion() {
+        const progressLabel = document.getElementById('quiz-progress-label');
+        const questionText = document.getElementById('quiz-question-text');
+        const optionsContainer = document.getElementById('quiz-options');
+        const container = document.getElementById('quiz-container');
+        const analyzing = document.getElementById('quiz-analyzing');
+
+        analyzing.style.display = 'none';
+        container.style.display = 'block';
+
+        const currentQ = selectedQuizQuestions[currentQuestionIndex];
+        progressLabel.innerText = `QUESTION ${currentQuestionIndex + 1} OF 12`;
+        questionText.innerText = currentQ.q;
+
+        optionsContainer.innerHTML = '';
+        const letters = ['A', 'B', 'C', 'D'];
+        currentQ.options.forEach((opt, idx) => {
+          const button = document.createElement('button');
+          button.className = 'quiz-option-btn';
+          button.innerHTML = `
+            <span class="quiz-option-letter">${letters[idx]}</span>
+            <span>${opt}</span>
+          `;
+          button.onclick = () => handleAnswerSelect();
+          optionsContainer.appendChild(button);
+        });
+      }
+
+      function handleAnswerSelect() {
+        AudioController.playClick();
+        totalQuestionsAnswered++;
+        
+        const container = document.getElementById('quiz-container');
+        const analyzing = document.getElementById('quiz-analyzing');
+        const analyzingText = document.getElementById('quiz-analyzing-text');
+
+        container.style.display = 'none';
+        analyzing.style.display = 'flex';
+        analyzingText.innerText = `Analyzing your responses, ${visitorName}...`;
+
+        // 1-2 seconds delay
+        const delay = 1000 + Math.random() * 1000;
+        setTimeout(() => {
+          currentQuestionIndex++;
+          if (currentQuestionIndex < 12) {
+            showQuestion();
+          } else {
+            analyzingText.innerText = `Compiling personality profile, ${visitorName}...`;
+            setTimeout(() => {
+              const textEl = document.getElementById('quiz-analyzing-text');
+              textEl.innerHTML = `<span style="color: var(--accent-green); font-size: 16px; font-weight: 700; letter-spacing: 1px;">Verification Successful ✅</span>`;
+              AudioController.playSuccess();
+              setTimeout(() => {
+                setStepView('main');
+              }, 2000);
+            }, 5000); // 5 seconds profile compilation
+          }
+        }, delay);
+      }
+
+      // ----------------------------------------------------
+      // STAGE 4 — FAKE REWARD PROGRESS LOGIC (15-20 Seconds)
+      // ----------------------------------------------------
+      const rewardMessages = [
+        "Wrapping surprise...",
+        "Adding finishing touches...",
+        "Making it extra special...",
+        "This one's worth the wait...",
+        "Trust us...",
+        "Definitely not a Rickroll...",
+        "Absolutely not a Rickroll...",
+        "We would never do that...",
+        "Promise...",
+        "Pinky promise...",
+        "Final verification...",
+        "Almost done...",
+        "Just one last step..."
+      ];
+
+      function runRewardLoader() {
+        const rewardSubtitle = document.getElementById('reward-subtitle');
+        if (rewardSubtitle) {
+          rewardSubtitle.innerText = `Almost done, ${visitorName}...`;
+        }
+
+        let rewardProgress = 0;
+        const progressBar = document.getElementById('reward-progress-bar');
+        const progressText = document.getElementById('reward-progress-text');
+        const msgEl = document.getElementById('reward-loading-message');
+        
+        const totalDuration = 15000 + Math.random() * 5000; // 15 to 20 seconds
+        const intervalTime = 150;
+        const totalTicks = totalDuration / intervalTime;
+        const increment = 100 / totalTicks;
+        
+        let rewardTickCount = 0;
+        let msgIndex = 0;
+
+        msgEl.innerText = rewardMessages[0];
+        totalMessagesSeen++;
+
+        const timer = setInterval(() => {
+          rewardTickCount++;
+          rewardProgress = Math.min(100, rewardTickCount * increment);
+          
+          progressBar.style.width = `${rewardProgress}%`;
+          progressText.innerText = `${Math.round(rewardProgress)}%`;
+
+          // Stagger through messages gracefully based on ticks
+          const msgsLength = rewardMessages.length;
+          const ticksPerMsg = totalTicks / msgsLength;
+          const calculatedMsgIndex = Math.min(msgsLength - 1, Math.floor(rewardTickCount / ticksPerMsg));
+          
+          if (calculatedMsgIndex !== msgIndex) {
+            msgIndex = calculatedMsgIndex;
+            msgEl.style.opacity = 0;
+            let currentMsg = rewardMessages[msgIndex];
+            if (currentMsg === "Almost done...") {
+              currentMsg = `Almost done, ${visitorName}...`;
+            }
+            totalMessagesSeen++;
+            setTimeout(() => {
+              msgEl.innerText = currentMsg;
+              msgEl.style.opacity = 1;
+            }, 100);
+          }
+
+          if (rewardProgress >= 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+              setStepView('reveal');
+              ConfettiSystem.burst();
+              animateRevealStats();
+            }, 600);
+          }
+        }, intervalTime);
+      }
+
+      // ----------------------------------------------------
+      // STEP 3: ESCAPING BUTTON CORE LOGIC
+      // ----------------------------------------------------
+      let isEscapingEnabled = false;
+      let escapeCount = 0;
+      let totalAttempts = 0;
+      const totalEscapesTarget = 25;
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+      const btn = document.getElementById('escaping-btn');
+
+      // Seamless breakout initialization
+      function enableEscaping(initialX, initialY) {
+        if (isEscapingEnabled) return;
+        
+        // Snap the button out of relative document structure to floating fixed
+        const rect = btn.getBoundingClientRect();
+        
+        // Move the button to body so its position is not affected by parent transforms!
+        document.body.appendChild(btn);
+        
+        btn.style.left = `${rect.left}px`;
+        btn.style.top = `${rect.top}px`;
+        btn.classList.add('btn-escaping');
+        
+        // Display the status metrics panel inside the main card
+        const statPanel = document.getElementById('escape-status');
+        statPanel.style.display = 'block';
+        setTimeout(() => statPanel.style.opacity = '1', 50);
+
+        document.getElementById('main-title').innerText = "Catch Me!";
+        
+        isEscapingEnabled = true;
+      }
+
+      // Calculate screen margin boundaries
+      function getNewCoordinate(currentX, currentY) {
+        const margin = 24;
+        const width = btn.offsetWidth;
+        const height = btn.offsetHeight;
+        
+        const maxX = window.innerWidth - width - margin;
+        const maxY = window.innerHeight - height - margin;
+        
+        let newX, newY;
+        let attempts = 0;
+        
+        // Find random spot, but not right under the current pointer position to avoid instant looping
+        do {
+          newX = margin + Math.random() * (maxX - margin);
+          newY = margin + Math.random() * (maxY - margin);
+          attempts++;
+        } while (
+          attempts < 50 && 
+          Math.hypot(newX + width / 2 - currentX, newY + height / 2 - currentY) < 180
+        );
+        
+        return { x: newX, y: newY };
+      }
+
+      function shakeScreen() {
+        document.body.classList.add('shake');
+        setTimeout(() => {
+          document.body.classList.remove('shake');
+        }, 300);
+      }
+
+      function handleButtonEscape(currentX, currentY, isDoubleJump = false) {
+        if (escapeCount >= totalEscapesTarget) return; // Stays still on 16th approach
+
+        enableEscaping(currentX, currentY);
+        escapeCount++;
+        totalAttempts++;
+
+        // Calculate and jump
+        const coord = getNewCoordinate(currentX, currentY);
+        btn.style.left = `${coord.x}px`;
+        btn.style.top = `${coord.y}px`;
+
+        AudioController.playWhoosh();
+        shakeScreen();
+
+        if (isTouchDevice && navigator.vibrate) {
+          // Intense rapid triple-pulse to feel physically jarring and frustrating
+          navigator.vibrate([100, 50, 100, 50, 100]);
+        }
+
+        // Funny messages & details update
+        updateEscapeUI();
+
+        // Double jump helper for mobile double tap troll
+        if (isDoubleJump) {
+          setTimeout(() => {
+            const coordDouble = getNewCoordinate(coord.x, coord.y);
+            btn.style.left = `${coordDouble.x}px`;
+            btn.style.top = `${coordDouble.y}px`;
+            AudioController.playWhoosh();
+            if (isTouchDevice && navigator.vibrate) {
+              // Heavier dual-blast alarm pattern for the double-jump troll
+              navigator.vibrate([150, 50, 150, 50, 150]);
+            }
+            totalAttempts++;
+            updateEscapeUI();
+          }, 150);
+        }
+      }
+
+      function updateEscapeUI() {
+        // Update Card Titles/Details
+        const sub = document.getElementById('main-subtitle');
+        const randomMsg = escapeMessages[Math.floor(Math.random() * escapeMessages.length)];
+        sub.innerText = randomMsg;
+
+        // Progress bar status update
+        const progressPercentage = (escapeCount / totalEscapesTarget) * 100;
+        document.getElementById('escape-progress-bar').style.width = `${progressPercentage}%`;
+        document.getElementById('escape-count-label').innerText = `Escapes: ${escapeCount}/${totalEscapesTarget}`;
+        
+        // Patience calculation
+        const patience = Math.max(0, 100 - Math.round((escapeCount / totalEscapesTarget) * 100));
+        document.getElementById('patience-countdown').innerText = `Patience: ${patience}%`;
+
+        // Check if loading double-tap troll for mobile
+        if (isTouchDevice && escapeCount >= 10) {
+          document.getElementById('bonus-troll-tip').style.display = 'block';
+        }
+
+        // Check if captured (it stays still on the 16th approach)
+        if (escapeCount === totalEscapesTarget) {
+          setTimeout(() => {
+            sub.innerText = "System overloaded. You broke me. Click CONTINUE now.";
+            sub.style.color = "var(--accent-green)";
+            btn.classList.add('btn-captured');
+            // Remove icon to show standard success or keep icon
+            btn.innerHTML = `Continue <i data-lucide="award"></i>`;
+            lucide.createIcons();
+            showToast("System Tired. Click Continue Now!", "success");
+          }, 400);
+        }
+      }
+
+      // Proximity event checking (for desktop)
+      if (!isTouchDevice) {
+        window.addEventListener('mousemove', (e) => {
+          if (currentStep !== 'main' || escapeCount >= totalEscapesTarget) return;
+
+          const rect = btn.getBoundingClientRect();
+          // Find distance from mouse cursor to button bounding box
+          const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+          const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+          const distance = Math.hypot(dx, dy);
+
+          if (distance < 100) {
+            handleButtonEscape(e.clientX, e.clientY, false);
+          }
+        });
+      }
+
+      // Mobile Touch Handling (Immediate Tap triggers jump)
+      let lastTapTime = 0;
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevents simulated mouse events / zoom
+        const now = Date.now();
+        const isDoubleTap = (now - lastTapTime) < 300;
+        lastTapTime = now;
+
+        const touch = e.touches[0];
+
+        if (escapeCount < totalEscapesTarget) {
+          if (isDoubleTap && escapeCount >= 10) {
+            handleButtonEscape(touch.clientX, touch.clientY, true); // Double jump troll!
+          } else {
+            handleButtonEscape(touch.clientX, touch.clientY, false);
+          }
+        } else {
+          // Captures successful click when it stays still on 16th approach
+          triggerCaptureClick();
+        }
+      });
+
+      // Desktop Click handling (when button finally stays still)
+      btn.addEventListener('click', (e) => {
+        if (escapeCount >= totalEscapesTarget) {
+          triggerCaptureClick();
+        } else {
+          // Desktop pointer clicks shouldn't succeed if escape count is not done
+          e.preventDefault();
+        }
+      });
+
+      function triggerCaptureClick() {
+        AudioController.playClick();
+        clickFinishedTime = Date.now();
+        setStepView('reward');
+        runRewardLoader();
+      }
+
+      // ----------------------------------------------------
+      // REVEAL STATISTICS ANIMATIONS
+      // ----------------------------------------------------
+      function animateValue(id, start, end, duration, decimal = false, suffix = '', formatter = null) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const ease = progress * (2 - progress); // Ease out quad
+          const value = start + (end - start) * ease;
+          
+          if (formatter) {
+            obj.innerText = formatter(value);
+          } else {
+            obj.innerText = (decimal ? value.toFixed(1) : Math.round(value)) + suffix;
+          }
+          
+          if (progress < 1) {
+            requestAnimationFrame(update);
+          } else {
+            if (formatter) {
+              obj.innerText = formatter(end);
+            } else {
+              obj.innerText = (decimal ? end.toFixed(1) : end) + suffix;
+            }
+          }
+        }
+        requestAnimationFrame(update);
+      }
+
+      function animateRevealStats() {
+        // Personalize final reveal messages
+        const revealTitle = document.querySelector('#step-reveal .glow-text');
+        const revealSubtitle = document.querySelector('#step-reveal .subtitle');
+        if (revealTitle) {
+          revealTitle.innerText = `🎉 Congratulations, ${visitorName}!`;
+        }
+        if (revealSubtitle) {
+          revealSubtitle.innerText = "You have officially wasted your time 😂";
+        }
+
+        // Calculations
+        const totalWastedTime = ((clickFinishedTime - pageLoadTime) / 1000);
+        
+        const formatWastedTime = (seconds) => {
+          const m = Math.floor(seconds / 60);
+          const s = (seconds % 60).toFixed(1);
+          return m > 0 ? `${m}m ${s}s` : `${s}s`;
+        };
+
+        // Set stats
+        animateValue('stat-wasted', 0, totalWastedTime, 1200, true, 's', formatWastedTime);
+        animateValue('stat-questions', 0, totalQuestionsAnswered, 1200, false);
+        animateValue('stat-messages', 0, totalMessagesSeen, 1200, false);
+        animateValue('stat-failed-clicks', 0, totalAttempts, 1200, false);
+        
+        // Count patience remaining down to critical deficit (random value 0-5%)
+        const patienceVal = document.getElementById('stat-patience-left');
+        if (patienceVal) {
+          let patiencePct = 100;
+          const targetPatience = Math.floor(Math.random() * 6); // 0-5%
+          const countdownTimer = setInterval(() => {
+            patiencePct -= 2;
+            if (patiencePct <= targetPatience) {
+              clearInterval(countdownTimer);
+              patienceVal.innerText = `${targetPatience}% (Depleted)`;
+              patienceVal.classList.add('text-red');
+            } else {
+              patienceVal.innerText = `${patiencePct}%`;
+            }
+          }, 20);
+        }
+      }
+
+      // ----------------------------------------------------
+      // YOUTUBE RICKROLL PLAY HANDLER
+      // ----------------------------------------------------
+      function playVideo() {
+        AudioController.playClick();
+        const container = document.getElementById('player-iframe-container');
+        const overlay = document.getElementById('video-play-btn');
+        
+        container.innerHTML = `
+          <iframe 
+            style="position: absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:16px;" 
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&controls=1&rel=0&enablejsapi=1" 
+            title="Never Gonna Give You Up" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>
+        `;
+        overlay.style.display = 'none';
+        container.style.display = 'block';
+      }
+
+      // ----------------------------------------------------
+      // SHARE / COPY PRANK LINK TO CLIPBOARD
+      // ----------------------------------------------------
+      function copyToClipboard() {
+        AudioController.playClick();
+        const url = window.location.href;
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(() => {
+            showToast("Link copied!", "info");
+          }).catch(err => {
+            fallbackCopy(url);
+          });
+        } else {
+          fallbackCopy(url);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const dummy = document.createElement("input");
+        document.body.appendChild(dummy);
+        dummy.value = text;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        showToast("Link copied!", "info");
+      }
+
+      // ----------------------------------------------------
+      // INTRO SCREEN & START EXPERIENCE LOGIC
+      // ----------------------------------------------------
+      function startPrankExperience() {
+        const inputEl = document.getElementById('intro-name-input');
+        const trimmed = inputEl ? inputEl.value.trim() : "";
+        
+        // Final validation guard
+        if (trimmed.length < 2) return;
+        if (trimmed.length > 30) return;
+        if (!/^[a-zA-Z0-9\s_-]+$/.test(trimmed)) return;
+
+        visitorName = trimmed;
+        AudioController.playClick();
+        
+        // Log victim info to serverless function asynchronously (non-blocking)
+        const payload = {
+          name: visitorName,
+          screen: `${window.screen ? window.screen.width : 0}×${window.screen ? window.screen.height : 0}`,
+          viewport: `${window.innerWidth}×${window.innerHeight}`,
+          timeZone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Unknown",
+          language: navigator.language || "Unknown",
+          platform: navigator.platform || "Unknown",
+          theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? "Dark" : "Light",
+          touch: ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0)) ? "Yes" : "No",
+          url: window.location.href,
+          referrer: document.referrer || "None",
+          localTime: new Date().toString()
+        };
+
+        fetch('/api/visit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        }).catch(err => {
+          console.error("Failed to log visit:", err);
+        });
+
+        // Personalize other screens
+        const bootSubtitle = document.querySelector('#step-boot .subtitle');
+        if (bootSubtitle) {
+          bootSubtitle.innerText = `Preparing your exclusive experience, ${visitorName}...`;
+        }
+        
+        const mainTitle = document.getElementById('main-title');
+        const mainSubtitle = document.getElementById('main-subtitle');
+        if (mainTitle) {
+          mainTitle.innerText = `Welcome, ${visitorName}.`;
+        }
+        if (mainSubtitle) {
+          mainSubtitle.innerText = "Everything is ready.";
+        }
+
+        // Transition Step 0 -> Step 1 (Fade out Intro, show Boot)
+        setStepView('boot');
+        
+        // Start Progress troll loader
+        bootStartTime = Date.now();
+        setTimeout(() => {
+          runLoader();
+        }, 500);
+      }
+
+      // ----------------------------------------------------
+      // EASTER EGGS (Esc window, Tab hidden)
+      // ----------------------------------------------------
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          showToast("No escaping 😈", "danger");
+        }
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          showToast("Welcome back. We waited for you.", "info");
+        }
+      });
+
+      // ----------------------------------------------------
+      // RUNTIMES INITIALIZATION
+      // ----------------------------------------------------
+      window.addEventListener('DOMContentLoaded', () => {
+        ParticleSystem.init('particle-canvas');
+        ConfettiSystem.init('confetti-canvas');
+        
+        // Start uptime ticking timer
+        setInterval(() => {
+          const diff = Date.now() - pageLoadTime;
+          const secs = Math.floor((diff / 1000) % 60);
+          const mins = Math.floor((diff / (1000 * 60)) % 60);
+          const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+          const pad = (num) => String(num).padStart(2, '0');
+          const ticker = document.getElementById('hud-uptime-ticker');
+          if (ticker) {
+            ticker.innerText = `Uptime: ${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+          }
+        }, 1000);
+
+        // Intro Screen event listeners
+        const introInput = document.getElementById('intro-name-input');
+        const startBtn = document.getElementById('intro-start-btn');
+        const errorMsg = document.getElementById('intro-error-msg');
+
+        if (introInput && startBtn && errorMsg) {
+          introInput.addEventListener('input', () => {
+            const rawVal = introInput.value;
+            const trimmed = rawVal.trim();
+            
+            // Validate characters first (only allow letters, numbers, spaces, hyphens, underscores)
+            const isValidPattern = trimmed === "" || /^[a-zA-Z0-9\s_-]+$/.test(trimmed);
+
+            if (!isValidPattern) {
+              errorMsg.innerText = "Only letters, numbers, spaces, hyphens, and underscores are allowed.";
+              errorMsg.classList.add('show');
+              startBtn.disabled = true;
+              return;
+            } else {
+              errorMsg.classList.remove('show');
+            }
+
+            if (trimmed.length < 2) {
+              startBtn.disabled = true;
+            } else if (trimmed.length > 30) {
+              errorMsg.innerText = "Name cannot exceed 30 characters.";
+              errorMsg.classList.add('show');
+              startBtn.disabled = true;
+            } else {
+              startBtn.disabled = false;
+            }
+          });
+
+          introInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !startBtn.disabled) {
+              startPrankExperience();
+            }
+          });
+
+          startBtn.addEventListener('click', () => {
+            if (!startBtn.disabled) {
+              startPrankExperience();
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
