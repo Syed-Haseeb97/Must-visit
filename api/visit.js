@@ -23,11 +23,19 @@ export default async function handler(req, res) {
 
     const visitorName = name ? name.trim() : "Unknown";
 
-    // Extract IP address from request headers
-    const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'Unknown';
-    // Clean up forwarded IP list if multiple exist
-    const cleanIp = ip && ip !== 'Unknown' ? ip.split(',')[0].trim() : 'Unknown';
+  // Get the client's IP address (Vercel-aware)
+const forwarded = req.headers["x-forwarded-for"];
+const realIp = req.headers["x-real-ip"];
 
+let cleanIp = "Unknown";
+
+if (typeof forwarded === "string" && forwarded.length > 0) {
+  cleanIp = forwarded.split(",")[0].trim();
+} else if (typeof realIp === "string" && realIp.length > 0) {
+  cleanIp = realIp.trim();
+} else if (req.socket?.remoteAddress) {
+  cleanIp = req.socket.remoteAddress;
+}
     // Parse user agent using ua-parser-js
     const ua = req.headers['user-agent'] || '';
     const parser = new UAParser(ua);
