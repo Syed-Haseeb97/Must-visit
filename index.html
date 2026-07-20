@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <!-- Lucide Icons Script -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- YouTube IFrame Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
     <style>
       :root {
         --font-sans: 'Poppins', sans-serif;
@@ -787,7 +789,7 @@
       }
 
       /* Reveal Card Expanded Heights override */
-      #step-reveal .glass-card {
+      #step-reveal .glass-card, #step-results .glass-card, #step-prize .glass-card {
         max-width: 580px;
         max-height: 95vh;
         overflow-y: auto;
@@ -795,17 +797,17 @@
       }
 
       /* Scrollbar Styling for scrollable containers */
-      #step-reveal .glass-card::-webkit-scrollbar {
+      #step-reveal .glass-card::-webkit-scrollbar, #step-results .glass-card::-webkit-scrollbar, #step-prize .glass-card::-webkit-scrollbar {
         width: 6px;
       }
-      #step-reveal .glass-card::-webkit-scrollbar-track {
+      #step-reveal .glass-card::-webkit-scrollbar-track, #step-results .glass-card::-webkit-scrollbar-track, #step-prize .glass-card::-webkit-scrollbar-track {
         background: transparent;
       }
-      #step-reveal .glass-card::-webkit-scrollbar-thumb {
+      #step-reveal .glass-card::-webkit-scrollbar-thumb, #step-results .glass-card::-webkit-scrollbar-thumb, #step-prize .glass-card::-webkit-scrollbar-thumb {
         background: rgba(255, 255, 255, 0.1);
         border-radius: 3px;
       }
-      #step-reveal .glass-card::-webkit-scrollbar-thumb:hover {
+      #step-reveal .glass-card::-webkit-scrollbar-thumb:hover, #step-results .glass-card::-webkit-scrollbar-thumb:hover, #step-prize .glass-card::-webkit-scrollbar-thumb:hover {
         background: rgba(255, 255, 255, 0.25);
       }
 
@@ -1054,6 +1056,38 @@
       </div>
     </div>
 
+    <!-- STEP 3.5: Fake Prize Screen -->
+    <div id="step-prize" class="step-view">
+      <div class="glass-card">
+        <div style="font-size: 56px; margin-bottom: 12px; filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.5));">🎁</div>
+        <h1 class="glow-text" style="font-size: 28px; margin-bottom: 6px; color: #f59e0b;">Mystery Reward Selected!</h1>
+        <p class="subtitle" id="prize-subtitle" style="font-size: 14px; margin-bottom: 24px;">Your profile has been selected for a special verification prize.</p>
+        
+        <!-- Styled Prize Card -->
+        <div id="prize-offer-container" style="background: rgba(245, 158, 11, 0.05); border: 1px dashed rgba(245, 158, 11, 0.3); border-radius: 20px; padding: 24px; margin-bottom: 28px; transition: all 0.3s ease;">
+          <div style="font-family: var(--font-mono); font-size: 12px; color: #f59e0b; letter-spacing: 2px; text-transform: uppercase;">SPECIAL BONUS</div>
+          <div style="font-size: 32px; font-weight: 800; color: #ffffff; margin: 10px 0;">₹10,000 CASH PRIZE</div>
+          <div style="font-size: 11px; color: #888;">Sponsored by Quantum Neural Synchronizer Corp.</div>
+        </div>
+
+        <!-- Claim Prize button -->
+        <button id="claim-prize-btn" class="btn-primary" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);" onclick="handleClaimPrize()">
+          Claim Reward <i data-lucide="gift"></i>
+        </button>
+
+        <!-- Hidden Mini-game choice container -->
+        <div id="prize-minigame" style="display: none; flex-direction: column; align-items: center; gap: 14px;">
+          <div style="font-family: var(--font-mono); font-size: 11px; color: #f59e0b; letter-spacing: 1.5px; text-transform: uppercase;">HUMAN CONFIRMATION CHALLENGE</div>
+          <p style="font-size: 13px; color: #bbb;">Choose the button that contains a reflection of your future:</p>
+          <div style="display: flex; gap: 12px; justify-content: center; width: 100%; margin-top: 6px;">
+            <button class="btn-primary" style="background: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); padding: 12px 24px;" onclick="handleMiniGameChoice('red')">🔴 Red</button>
+            <button class="btn-primary" style="background: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); padding: 12px 24px;" onclick="handleMiniGameChoice('green')">🟢 Green</button>
+            <button class="btn-primary" style="background: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); padding: 12px 24px;" onclick="handleMiniGameChoice('blue')">🔵 Blue</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- STEP 4: Fake Reward loading screen -->
     <div id="step-reward" class="step-view">
       <div class="glass-card">
@@ -1069,6 +1103,50 @@
         </div>
         
         <div id="reward-loading-message" style="font-size: 12px; color: var(--accent-cyan); font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; min-height: 20px;">Wrapping surprise...</div>
+      </div>
+    </div>
+
+    <!-- STEP 4.5: Fake AI Personality Analysis & Personalized Roast -->
+    <div id="step-results" class="step-view">
+      <div class="glass-card" style="max-width: 550px;">
+        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-cyan); letter-spacing: 2px; margin-bottom: 8px;">VERIFICATION COMPLETE</div>
+        <h1 class="glow-text" style="font-size: 26px; margin-bottom: 15px;">Generating Final Results...</h1>
+        
+        <!-- Polished Session Report -->
+        <div style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 24px; margin-bottom: 24px;">
+          <div style="font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.4); border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 10px; margin-bottom: 14px; display: flex; justify-content: space-between;">
+            <span>QUANTUM SESSION REPORT</span>
+            <span id="report-session-id">ID: A91C-73BF</span>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+            <div>
+              <div style="font-size: 11px; color: #888;">TIME WASTED</div>
+              <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: #ffffff;" id="report-time">1m 32s</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: #888;">QUESTIONS ANSWERED</div>
+              <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: #ffffff;" id="report-questions">12</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: #888;">PATIENCE RATING</div>
+              <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--accent-cyan);" id="report-patience">Legendary</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: #888;">TROLL SCORE</div>
+              <div style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: #ef4444;" id="report-score">94 / 100</div>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; color: #888; margin-bottom: 6px;">PERSONALIZED ROAST</div>
+          <div style="background: rgba(6, 182, 212, 0.04); border: 1px solid rgba(6, 182, 212, 0.15); border-radius: 12px; padding: 14px; font-size: 13px; line-height: 1.5; color: #e2e8f0; font-style: italic;" id="report-roast">
+            Loading personalized roast...
+          </div>
+        </div>
+
+        <button id="view-results-btn" class="btn-primary" style="width: 100%; justify-content: center;" onclick="handleViewResultsClick()">
+          View Final Results <i data-lucide="eye"></i>
+        </button>
       </div>
     </div>
 
@@ -1108,6 +1186,14 @@
           <div class="stat-card full-width">
             <div class="stat-value text-red" id="stat-patience-left">100%</div>
             <div class="stat-label">Patience Remaining</div>
+          </div>
+        </div>
+
+        <!-- Phase 4: Final Achievements Trophies List -->
+        <div style="margin: 20px 0 24px 0;">
+          <div style="font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; text-align: left;">🏆 PRANK ACHIEVEMENTS UNLOCKED</div>
+          <div id="final-achievements-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <!-- Rendered dynamically -->
           </div>
         </div>
 
@@ -1422,6 +1508,331 @@
       let bootEndTime = null;
       let clickFinishedTime = null;
       let currentStep = 'intro'; // 'intro', 'boot', 'verification', 'main', 'reward', 'reveal'
+      
+      // Random Session ID generator matching 'A91C-73BF' format
+      function generateSessionId() {
+        const chars = '0123456789ABCDEF';
+        const part1 = Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        const part2 = Array.from({length: 4}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+        return `${part1}-${part2}`;
+      }
+
+      // Extended Analytics Tracking Variables
+      let sessionId = sessionStorage.getItem('prank_session_id');
+      if (!sessionId) {
+        sessionId = generateSessionId();
+        sessionStorage.setItem('prank_session_id', sessionId);
+      }
+
+      // Returning Visitor Detection (UUID + Visit Number in localStorage)
+      let visitorUuid = localStorage.getItem('prank_visitor_uuid');
+      let visitNumber = parseInt(localStorage.getItem('prank_visit_number') || '0', 10);
+      let isReturningVisitor = !!visitorUuid;
+
+      if (!visitorUuid) {
+        visitorUuid = 'u_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+        localStorage.setItem('prank_visitor_uuid', visitorUuid);
+        visitNumber = 1;
+        localStorage.setItem('prank_visit_number', '1');
+      } else {
+        if (!sessionStorage.getItem('prank_visit_counted')) {
+          visitNumber++;
+          localStorage.setItem('prank_visit_number', visitNumber.toString());
+          sessionStorage.setItem('prank_visit_counted', 'true');
+        }
+      }
+
+      // Dynamic Troll Engine Targets (Phase 1)
+      const targetQuizQuestionsCount = 8 + Math.floor(Math.random() * 4); // random between 8 and 11
+      const targetEscapesCount = 14 + Math.floor(Math.random() * 7); // random between 14 and 20
+
+      // Milestone Timestamps for Advanced Tracking & Analysis (Phase 2)
+      const milestones = {
+        opened: pageLoadTime,
+        visitorStarted: null,
+        nameEntered: null,
+        loadingStarted: null,
+        loadingFinished: null,
+        quizStarted: null,
+        quizCompleted: null,
+        buttonSpawned: null,
+        buttonClicked: null,
+        prizeStarted: null,
+        prizeClaimed: null,
+        rewardStarted: null,
+        resultsStarted: null,
+        rickrollStarted: null,
+        rickrollCompleted: null
+      };
+
+      // Achievement Engine (Phase 4)
+      const achievementsList = {
+        trust: { emoji: "🏆", title: "TRUST LEVEL 100%", name: "Believer of Internet Things", unlocked: false },
+        waiter: { emoji: "🏆", title: "PROFESSIONAL WAITER", name: "Patience Simulation Starter", unlocked: false },
+        human: { emoji: "🏆", title: "CERTIFIED HUMAN", name: "Proved Carbon-Based Existence", unlocked: false },
+        expert: { emoji: "🏆", title: "VERIFICATION EXPERT", name: "Completed a Totally Real Quiz", unlocked: false },
+        hunter: { emoji: "🏆", title: "BUTTON HUNTER", name: "Failed Click Mastery Level 1", unlocked: false },
+        infinite: { emoji: "🏆", title: "INFINITE PATIENCE", name: "Supernatural Patience Badge", unlocked: false },
+        master: { emoji: "🏆", title: "CLICK MASTER", name: "Caught the Uncatchable", unlocked: false },
+        survivor: { emoji: "🏆", title: "QUANTUM SURVIVOR", name: "Surviving Deep-Level Teasing", unlocked: false },
+        almost: { emoji: "🏆", title: "ALMOST THERE...", name: "One Step From Pure Gold", unlocked: false },
+        elite: { emoji: "🏆", title: "ELITE TESTER", name: "Certified Prank Survivor", unlocked: false }
+      };
+
+      function unlockAchievement(id) {
+        if (!achievementsList[id] || achievementsList[id].unlocked) return;
+        achievementsList[id].unlocked = true;
+        
+        // Show visual achievement toast
+        const ach = achievementsList[id];
+        showAchievementToast(ach.emoji, ach.title, ach.name);
+        
+        // Send analytics tracking event for backward compatibility and monitoring
+        AnalyticsTracker.trackEvent(`achievement_unlocked_${id}`);
+      }
+
+      function showAchievementToast(emoji, title, name) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+        toast.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(245, 158, 11, 0.2)';
+        toast.innerHTML = `
+          <span class="toast-icon" style="font-size: 24px;">${emoji}</span>
+          <div style="display: flex; flex-direction: column; text-align: left; gap: 2px;">
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: #f59e0b; letter-spacing: 1.5px;">ACHIEVEMENT UNLOCKED</span>
+            <span style="font-size: 13px; font-weight: 600; color: #ffffff;">${name}</span>
+          </div>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 15);
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 400);
+        }, 3800);
+      }
+
+      let rewardProgress = 0;
+      let isPossiblyRefreshing = false;
+      let isVideoPlaying = false;
+      let totalWatchedSeconds = 0;
+      let watchTimerInterval = null;
+      let rickrollWatchStartedSent = false;
+      let rickrollWatchCompletedSent = false;
+      let exitNotificationSent = false;
+
+      const stageNames = {
+        'intro': 'Intro Screen',
+        'boot': 'Loading Screen',
+        'verification': 'Verification Quiz',
+        'main': 'Moving Button Screen',
+        'prize': 'Prize Offer Screen',
+        'reward': 'Reward Loading',
+        'results': 'Session Report Screen',
+        'reveal': 'Statistics Reveal'
+      };
+
+      function getElapsedTimeStr() {
+        const elapsedSecs = Math.round((Date.now() - pageLoadTime) / 1000);
+        const m = Math.floor(elapsedSecs / 60);
+        const s = elapsedSecs % 60;
+        return m > 0 ? `${m}m ${s}s` : `${s}s`;
+      }
+
+      function getProgressPercentage() {
+        if (currentStep === 'intro') return 0;
+        if (currentStep === 'boot') {
+          return Math.round(5 + (currentProgress / 100) * 20); // 5% - 25%
+        }
+        if (currentStep === 'verification') {
+          return Math.round(25 + (currentQuestionIndex / targetQuizQuestionsCount) * 25); // 25% - 50%
+        }
+        if (currentStep === 'main') {
+          const escRatio = targetEscapesCount > 0 ? (escapeCount / targetEscapesCount) : 0;
+          return Math.round(50 + Math.min(1, escRatio) * 25); // 50% - 75%
+        }
+        if (currentStep === 'prize') {
+          return 78;
+        }
+        if (currentStep === 'reward') {
+          return Math.round(80 + (rewardProgress / 100) * 15); // 80% - 95%
+        }
+        if (currentStep === 'results') {
+          return 98;
+        }
+        return 100;
+      }
+
+      function formatWatchTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+
+      function startWatchTimer() {
+        if (watchTimerInterval) return;
+        watchTimerInterval = setInterval(() => {
+          if (isVideoPlaying) {
+            totalWatchedSeconds++;
+            if (totalWatchedSeconds >= 212 && !rickrollWatchCompletedSent) {
+              rickrollWatchCompletedSent = true;
+              AnalyticsTracker.trackEvent('rickroll_finished');
+              AnalyticsTracker.trackEvent('rickroll_completed');
+            }
+          }
+        }, 1000);
+      }
+
+      function stopWatchTimer() {
+        if (watchTimerInterval) {
+          clearInterval(watchTimerInterval);
+          watchTimerInterval = null;
+        }
+      }
+
+      function handleYoutubePlay() {
+        isVideoPlaying = true;
+        startWatchTimer();
+        
+        if (!AnalyticsTracker.rickrollNotificationSent) {
+          AnalyticsTracker.rickrollNotificationSent = true;
+          AnalyticsTracker.trackEvent('rickroll_started');
+        }
+
+        if (!rickrollWatchStartedSent) {
+          rickrollWatchStartedSent = true;
+          AnalyticsTracker.trackEvent('rickroll_watch_started');
+        }
+      }
+
+      function handleYoutubePause() {
+        isVideoPlaying = false;
+      }
+
+      function handleYoutubeEnded() {
+        isVideoPlaying = false;
+        if (!rickrollWatchCompletedSent) {
+          rickrollWatchCompletedSent = true;
+          AnalyticsTracker.trackEvent('rickroll_finished');
+          AnalyticsTracker.trackEvent('rickroll_completed');
+        }
+      }
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.metaKey && e.key === 'r')) {
+          isPossiblyRefreshing = true;
+        }
+      });
+
+      function handleExit() {
+        if (currentStep === 'intro') return;
+        if (exitNotificationSent) return;
+        exitNotificationSent = true;
+
+        const isCompleted = (currentStep === 'reveal');
+        const statusStr = isCompleted ? "Completed" : "Abandoned";
+
+        const totalWastedTimeSec = Math.round((Date.now() - pageLoadTime) / 1000);
+        const m = Math.floor(totalWastedTimeSec / 60);
+        const s = totalWastedTimeSec % 60;
+        const timeWastedStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+
+        let loadingTimeStr = "N/A";
+        if (bootEndTime && bootStartTime) {
+          loadingTimeStr = ((bootEndTime - bootStartTime) / 1000).toFixed(1) + "s";
+        }
+
+        let watchTimeSec = totalWatchedSeconds;
+        const formattedWatchTimeStr = formatWatchTime(watchTimeSec);
+
+        // Retrieve latest messageId from sessionStorage (for beacon)
+        const savedMsgId = sessionStorage.getItem('prank_message_id') || AnalyticsTracker.messageId;
+
+        // Fetch browser specifications using UAParser structure for complete backward compatibility
+        const basePayload = {
+          sessionId: sessionId,
+          name: visitorName,
+          messageId: savedMsgId,
+          isReturning: isReturningVisitor,
+          visitNumber: visitNumber,
+          url: window.location.href,
+          pageTitle: document.title,
+          localTime: new Date().toString(),
+          
+          // Device specs
+          screen: `${window.screen ? window.screen.width : 0}×${window.screen ? window.screen.height : 0}`,
+          viewport: `${window.innerWidth}×${window.innerHeight}`,
+          devicePixelRatio: window.devicePixelRatio || 1,
+          colorDepth: window.screen ? window.screen.colorDepth : "Unknown",
+          orientation: (window.screen && window.screen.orientation) ? window.screen.orientation.type : "Unknown",
+          theme: window.matchMedia('(prefers-color-scheme: dark)').matches ? "Dark" : "Light",
+          touch: ('ontouchstart' in window || (navigator && navigator.maxTouchPoints > 0)) ? "Yes" : "No",
+          language: navigator.language || "Unknown"
+        };
+
+        if (!isCompleted) {
+          // Send EXACTLY ONE Visitor Left Early notification
+          const currentStage = stageNames[currentStep] || 'Unknown';
+          const progressPercent = getProgressPercentage();
+          const elapsedTimeStr = getElapsedTimeStr();
+          const reasonStr = isPossiblyRefreshing ? "Page Refreshed" : "Closed tab / Navigated away";
+
+          const leftPayload = {
+            ...basePayload,
+            event: 'visitor_left',
+            stage: currentStage,
+            progress: progressPercent,
+            elapsedTime: elapsedTimeStr,
+            reason: reasonStr
+          };
+
+          const payloadStr = JSON.stringify(leftPayload);
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/visit', payloadStr);
+          } else {
+            fetch('/api/visit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payloadStr,
+              keepalive: true
+            });
+          }
+        } else {
+          // Send EXACTLY ONE final completed summary notification
+          const summaryPayload = {
+            ...basePayload,
+            event: 'session_summary',
+            status: "Completed",
+            timeWasted: timeWastedStr,
+            loadingTime: loadingTimeStr,
+            buttonAttempts: totalAttempts,
+            questionsAnswered: totalQuestionsAnswered,
+            rickrollWatched: watchTimeSec > 0 ? "Yes" : "No",
+            rickrollWatchTime: formattedWatchTimeStr
+          };
+
+          const payloadStr = JSON.stringify(summaryPayload);
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/visit', payloadStr);
+          } else {
+            fetch('/api/visit', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payloadStr,
+              keepalive: true
+            });
+          }
+        }
+      }
+
+      window.addEventListener('beforeunload', handleExit);
+      window.addEventListener('pagehide', handleExit);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          handleExit();
+        }
+      });
 
       const loadingMessages = [
         "Connecting to satellites...",
@@ -1566,9 +1977,14 @@
       let totalMessagesSeen = 0;
       let pauseRemainingMs = 0;
       let tickCount = 0;
+      let hasSimulatedError = false;
+      let errorTimerActive = false;
+      let loadingSpeedPenalty = 1.0; // Increases wait time if user is hyperactive or impatient
 
       // 1. Boot Progress Runner
       function runLoader() {
+        if (errorTimerActive) return;
+
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
         
@@ -1592,13 +2008,80 @@
           return;
         }
 
+        // Fake Error Recovery (Phase 8) - Triggered around 55% progress
+        if (currentProgress >= 53 && currentProgress < 57 && !hasSimulatedError) {
+          hasSimulatedError = true;
+          errorTimerActive = true;
+          progressBar.style.width = `${currentProgress.toFixed(1)}%`;
+          progressText.innerText = `${currentProgress.toFixed(1)}%`;
+          
+          const msgEl = document.getElementById('loading-message');
+          if (msgEl) {
+            msgEl.innerText = "🛑 CRITICAL ERROR: Connection stream 0x800F081F desynced.";
+            msgEl.style.color = "#ef4444";
+          }
+          showToast("Verification stream disrupted! Recalibrating...", "danger");
+
+          // Staged automated error recovery sequence
+          setTimeout(() => {
+            if (msgEl) msgEl.innerText = "🔄 Initializing automated fallback recovery...";
+            showToast("System: Retry 1 of 17...", "info");
+          }, 1500);
+
+          setTimeout(() => {
+            if (msgEl) msgEl.innerText = "⚡ Synchronizing decentralized host packets...";
+            showToast("System: Retry 2 of 17...", "info");
+          }, 3000);
+
+          setTimeout(() => {
+            if (msgEl) msgEl.innerText = "📡 Safe tunnel bridged. Continuing verification...";
+            showToast("System: Connection stabilized!", "success");
+          }, 4500);
+
+          setTimeout(() => {
+            if (msgEl) {
+              msgEl.innerText = "Continuing verification...";
+              msgEl.style.color = "var(--accent-cyan)";
+            }
+            errorTimerActive = false;
+            runLoader();
+          }, 6000);
+
+          return;
+        }
+
+        // Sympathy Mode messages (Phase 7)
+        if (tickCount === 45) {
+          showToast("You've already come this far... Stay strong! 💪", "info");
+        } else if (tickCount === 85) {
+          showToast("Leaving now would waste all of your hard-earned progress!", "info");
+        } else if (tickCount === 125) {
+          showToast("Your patience profile is scoring off-the-charts!", "success");
+        } else if (tickCount === 165) {
+          showToast("Almost at the final portal. Trust the process...", "info");
+        }
+
+        // Random Troll Events (Phase 9)
+        if (Math.random() < 0.015 && currentProgress > 10 && currentProgress < 90) {
+          const trollEvents = [
+            "Unexpected potato detected. Checking system gravity...",
+            "Server sneezed. Wiping dust from digital pixels...",
+            "The Hamster powering our server took a lunch break. Swapping hams...",
+            "Quantum synchronization in progress. Please do not blink.",
+            "AI taking a coffee break... Back in 2 seconds.",
+            "Rebooting cosmic reality... Please remain calm."
+          ];
+          const randomEv = trollEvents[Math.floor(Math.random() * trollEvents.length)];
+          showToast(`System alert: ${randomEv}`, "info");
+        }
+
         // Not paused, let's process the progress update
         tickCount++;
 
         // Random chance of initiating a pause (between 15% and 85% progress)
         if (currentProgress > 15 && currentProgress < 85 && Math.random() < 0.025) {
-          // Pause for 3000ms to 8000ms
-          const pauseSecs = 3 + Math.floor(Math.random() * 6); // 3 to 8 seconds
+          // Pause for 3000ms to 8000ms (and apply adaptive penalty multiplier if user is clicky)
+          const pauseSecs = (3 + Math.floor(Math.random() * 5)) * loadingSpeedPenalty; 
           pauseRemainingMs = pauseSecs * 1000;
           updateLoadingMessage(); // Force update message on pause
           setTimeout(runLoader, 400);
@@ -1607,21 +2090,21 @@
 
         // Random chance of going backwards (between 10% and 90% progress)
         if (currentProgress > 10 && currentProgress < 90 && Math.random() < 0.02) {
-          const slip = 1 + Math.random() * 2; // 1% to 3%
+          const slip = (1 + Math.random() * 2) * loadingSpeedPenalty; // Larger slips for impatient users
           currentProgress = Math.max(1, currentProgress - slip);
-          showToast("Connection packet slip detected! Synchronizing...", "info");
+          showToast("Connection packet slip detected! Resynchronizing...", "info");
         }
         // Random chance of jump forward (under 85% progress)
         else if (currentProgress < 85 && Math.random() < 0.025) {
-          const jump = 5 + Math.random() * 5; // 5% to 10%
+          const jump = (5 + Math.random() * 5) / loadingSpeedPenalty; // Impatience shrinks jumps
           currentProgress = Math.min(95, currentProgress + jump);
         }
         // Normal crawling increment
         else {
-          let increment = 0.2 + Math.random() * 1.0; // slow progress
+          let increment = (0.2 + Math.random() * 1.0) / loadingSpeedPenalty; // Slowed progress if clicky
           // Slow down even more near the end
           if (currentProgress >= 90) {
-            increment = 0.05 + Math.random() * 0.25;
+            increment = (0.05 + Math.random() * 0.25) / loadingSpeedPenalty;
           }
           currentProgress += increment;
         }
@@ -1631,8 +2114,8 @@
           currentProgress = 99.9;
         }
 
-        // Extreme patience threshold - force 100% after 220 ticks to ensure it doesn't run forever
-        if (tickCount > 220) {
+        // Extreme patience threshold - force 100% after 250 ticks to ensure it finishes
+        if (tickCount > 250) {
           currentProgress = 100;
         }
 
@@ -1821,8 +2304,8 @@
 
       function initQuiz() {
         const shuffled = [...quizQuestions].sort(() => Math.random() - 0.5);
-        // Randomize questions each visit - select 12 of them
-        selectedQuizQuestions = shuffled.slice(0, 12);
+        // Randomize questions each visit - select randomized target count of them
+        selectedQuizQuestions = shuffled.slice(0, targetQuizQuestionsCount);
         currentQuestionIndex = 0;
         totalQuestionsAnswered = 0;
         showQuestion();
@@ -1839,7 +2322,7 @@
         container.style.display = 'block';
 
         const currentQ = selectedQuizQuestions[currentQuestionIndex];
-        progressLabel.innerText = `QUESTION ${currentQuestionIndex + 1} OF 12`;
+        progressLabel.innerText = `QUESTION ${currentQuestionIndex + 1} OF ${targetQuizQuestionsCount}`;
         questionText.innerText = currentQ.q;
 
         optionsContainer.innerHTML = '';
@@ -1859,6 +2342,11 @@
       function handleAnswerSelect() {
         AudioController.playClick();
         totalQuestionsAnswered++;
+
+        // Unlock Certified Human achievement on the 4th question answered
+        if (totalQuestionsAnswered === 4) {
+          unlockAchievement('human');
+        }
         
         const container = document.getElementById('quiz-container');
         const analyzing = document.getElementById('quiz-analyzing');
@@ -1872,9 +2360,12 @@
         const delay = 1000 + Math.random() * 1000;
         setTimeout(() => {
           currentQuestionIndex++;
-          if (currentQuestionIndex < 12) {
+          if (currentQuestionIndex < targetQuizQuestionsCount) {
             showQuestion();
           } else {
+            // Unlock Verification Expert achievement upon completing the quiz
+            unlockAchievement('expert');
+            
             analyzingText.innerText = `Compiling personality profile, ${visitorName}...`;
             AnalyticsTracker.sendUpdate('quiz_complete');
             setTimeout(() => {
@@ -1915,7 +2406,7 @@
           rewardSubtitle.innerText = `Almost done, ${visitorName}...`;
         }
 
-        let rewardProgress = 0;
+        rewardProgress = 0;
         const progressBar = document.getElementById('reward-progress-bar');
         const progressText = document.getElementById('reward-progress-text');
         const msgEl = document.getElementById('reward-loading-message');
@@ -1960,10 +2451,9 @@
           if (rewardProgress >= 100) {
             clearInterval(timer);
             setTimeout(() => {
-              setStepView('reveal');
-              ConfettiSystem.burst();
-              animateRevealStats();
-              AnalyticsTracker.sendUpdate('reveal_complete');
+              setStepView('results');
+              generateResultsReport();
+              AnalyticsTracker.sendUpdate('results_start');
             }, 600);
           }
         }, intervalTime);
@@ -1975,7 +2465,7 @@
       let isEscapingEnabled = false;
       let escapeCount = 0;
       let totalAttempts = 0;
-      const totalEscapesTarget = 25;
+      const totalEscapesTarget = targetEscapesCount;
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
       const btn = document.getElementById('escaping-btn');
@@ -2162,9 +2652,165 @@
       function triggerCaptureClick() {
         AudioController.playClick();
         clickFinishedTime = Date.now();
-        setStepView('reward');
-        AnalyticsTracker.sendUpdate('reward_start');
-        runRewardLoader();
+        
+        // Unlock click master achievement (PHASE 4)
+        unlockAchievement('master');
+
+        // Transition to Prize Offer screen instead of straight to Reward loader!
+        milestones.prizeStarted = Date.now();
+        setStepView('prize');
+        AnalyticsTracker.sendUpdate('prize_start');
+      }
+
+      // ----------------------------------------------------
+      // INTERACTIVE TROLL CORE HANDLERS (PHASES 10-15)
+      // ----------------------------------------------------
+      function handleClaimPrize() {
+        AudioController.playClick();
+        
+        // Hide offer card, show mini-game verification (Captcha color)
+        const offerContainer = document.getElementById('prize-offer-container');
+        if (offerContainer) offerContainer.style.display = 'none';
+        
+        const claimBtn = document.getElementById('claim-prize-btn');
+        if (claimBtn) claimBtn.style.display = 'none';
+        
+        const miniGame = document.getElementById('prize-minigame');
+        if (miniGame) miniGame.style.display = 'flex';
+        
+        const sub = document.getElementById('prize-subtitle');
+        if (sub) {
+          sub.innerText = "Human verification required to claim the ₹10,000 cash prize.";
+        }
+        
+        // Unlock almost there achievement (PHASE 4)
+        unlockAchievement('almost');
+      }
+
+      function handleMiniGameChoice(color) {
+        AudioController.playClick();
+        
+        // Show incorrect notice and proceed to Decryption
+        showToast("Incorrect pattern. Swapping matrices...", "danger");
+        
+        const sub = document.getElementById('prize-subtitle');
+        if (sub) {
+          sub.innerHTML = `<span style="color: var(--accent-cyan);">Neural signature verified. Bypassing validation loop...</span>`;
+        }
+        
+        setTimeout(() => {
+          milestones.prizeClaimed = Date.now();
+          milestones.rewardStarted = Date.now();
+          setStepView('reward');
+          AnalyticsTracker.sendUpdate('reward_start');
+          runRewardLoader();
+        }, 1800);
+      }
+
+      function generateResultsReport() {
+        // Set Session ID
+        const sidEl = document.getElementById('report-session-id');
+        if (sidEl) {
+          sidEl.innerText = `ID: ${sessionId}`;
+        }
+        
+        // Set Time Wasted
+        const totalWastedTimeSec = Math.round((Date.now() - pageLoadTime) / 1000);
+        const m = Math.floor(totalWastedTimeSec / 60);
+        const s = totalWastedTimeSec % 60;
+        const timeWastedStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+        const timeEl = document.getElementById('report-time');
+        if (timeEl) {
+          timeEl.innerText = timeWastedStr;
+        }
+        
+        // Set Questions Answered
+        const qEl = document.getElementById('report-questions');
+        if (qEl) {
+          qEl.innerText = `${totalQuestionsAnswered}/${targetQuizQuestionsCount}`;
+        }
+        
+        // Patience Rating based on escapes
+        let patienceRating = "Standard";
+        if (escapeCount >= 18) patienceRating = "Legendary";
+        else if (escapeCount >= 14) patienceRating = "Zen Master";
+        else if (escapeCount >= 10) patienceRating = "Heroic";
+        else patienceRating = "Saint-Like";
+        
+        const pEl = document.getElementById('report-patience');
+        if (pEl) {
+          pEl.innerText = patienceRating;
+        }
+        
+        // Troll Score out of 100
+        const calculatedScore = Math.min(100, Math.round((totalWastedTimeSec * 1.5) + (totalAttempts * 1.2) + (totalQuestionsAnswered * 2.5) + 20));
+        const scoreEl = document.getElementById('report-score');
+        if (scoreEl) {
+          scoreEl.innerText = `${calculatedScore} / 100`;
+        }
+        
+        // Personalized Roast using Visitor Name
+        const roasts = [
+          `Hey ${visitorName}, congratulations! You spent ${timeWastedStr} of your precious life chasing a button that didn't want to be clicked (it literally ran away from you ${escapeCount} times). You answered ${totalQuestionsAnswered} ridiculous questions about clouds and dinosaur accountants, and you actually believed you were winning ₹10,000. Your Troll Score of ${calculatedScore}% indicates you are an exceptional candidate for the Ultimate Patience Hall of Fame! 😂`,
+          `Well, well, ${visitorName}... ${timeWastedStr} of your existence is gone forever. You clicked a dodging button ${totalAttempts} times, solved nonsense brain-melters, and completed a color Captcha challenge just to claim a fake cash prize. Your patience score is ${calculatedScore}/100, which is both highly respectable and mildly concerning. Give yourself a round of applause! 👏`,
+          `Amazing job, ${visitorName}! You survived the entire verification matrix. Total time wasted: ${timeWastedStr}. Moving button escapes: ${escapeCount}. Cash prize claimed: ₹0. Your patience level is officially "${patienceRating}". Click below to see the results of our deep psychological evaluation of your profile.`
+        ];
+        const selectedRoast = roasts[Math.floor(Math.random() * roasts.length)];
+        const roastEl = document.getElementById('report-roast');
+        if (roastEl) {
+          roastEl.innerText = selectedRoast;
+        }
+        
+        // Unlock quantum survivor achievement
+        unlockAchievement('survivor');
+      }
+
+      function handleViewResultsClick() {
+        AudioController.playClick();
+        
+        // Unlock elite tester achievement
+        unlockAchievement('elite');
+        
+        // Transition to step-reveal (The Rickroll Screen!)
+        setStepView('reveal');
+        ConfettiSystem.burst();
+        animateRevealStats();
+        
+        // Render final achievement trophies list
+        renderFinalAchievements();
+        
+        // Tell the tracker that the reveal is complete (backward compatibility)
+        AnalyticsTracker.sendUpdate('reveal_complete');
+      }
+
+      function renderFinalAchievements() {
+        const finalContainer = document.getElementById('final-achievements-list');
+        if (!finalContainer) return;
+        
+        finalContainer.innerHTML = '';
+        Object.keys(achievementsList).forEach(key => {
+          const ach = achievementsList[key];
+          const badge = document.createElement('div');
+          badge.style.display = 'flex';
+          badge.style.alignItems = 'center';
+          badge.style.gap = '8px';
+          badge.style.background = ach.unlocked ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255,255,255,0.02)';
+          badge.style.border = ach.unlocked ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(255,255,255,0.05)';
+          badge.style.borderRadius = '12px';
+          badge.style.padding = '8px 12px';
+          badge.style.opacity = ach.unlocked ? '1' : '0.4';
+          badge.style.transition = 'all 0.3s ease';
+          badge.style.fontSize = '12px';
+          badge.style.color = ach.unlocked ? '#f59e0b' : '#888';
+          badge.innerHTML = `
+            <span style="font-size: 16px;">${ach.emoji}</span>
+            <div style="display: flex; flex-direction: column; text-align: left;">
+              <span style="font-weight: 700; font-size: 10px; font-family: var(--font-mono);">${ach.title}</span>
+              <span style="font-size: 11px; color: ${ach.unlocked ? '#fff' : '#666'};">${ach.name}</span>
+            </div>
+          `;
+          finalContainer.appendChild(badge);
+        });
       }
 
       // ----------------------------------------------------
@@ -2247,14 +2893,70 @@
       // ----------------------------------------------------
       // YOUTUBE RICKROLL PLAY HANDLER
       // ----------------------------------------------------
-      function playVideo() {
-        AudioController.playClick();
+      let ytPlayer = null;
+
+      function triggerRickrollNotification() {
+        if (AnalyticsTracker.rickrollNotificationSent) return;
         AnalyticsTracker.playVideoTime = Date.now();
         AnalyticsTracker.rickrollStarted = "Yes (at " + new Date().toString() + ")";
         AnalyticsTracker.sendUpdate('rickroll_start');
+      }
+
+      function playVideo() {
+        AudioController.playClick();
         const container = document.getElementById('player-iframe-container');
         const overlay = document.getElementById('video-play-btn');
         
+        overlay.style.display = 'none';
+        container.style.display = 'block';
+
+        // Prepare an element for the YT Player to bind to
+        container.innerHTML = `<div id="yt-player-element" style="width: 100%; height: 100%;"></div>`;
+
+        try {
+          if (typeof YT !== 'undefined' && YT.Player) {
+            ytPlayer = new YT.Player('yt-player-element', {
+              height: '100%',
+              width: '100%',
+              videoId: 'dQw4w9WgXcQ',
+              playerVars: {
+                'autoplay': 1,
+                'controls': 1,
+                'rel': 0,
+                'enablejsapi': 1
+              },
+              events: {
+                'onReady': function(event) {
+                  // Fallback play trigger if autoplay is blocked by browser policies
+                  event.target.playVideo();
+                },
+                'onStateChange': function(event) {
+                  // YT.PlayerState.PLAYING is 1
+                  if (event.data === 1) {
+                    triggerRickrollNotification();
+                  }
+                }
+              }
+            });
+
+            // Ensure the generated iframe has absolute positioning and rounding to fit container
+            setTimeout(() => {
+              const iframe = container.querySelector('iframe');
+              if (iframe) {
+                iframe.setAttribute('style', 'position: absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:16px;');
+              }
+            }, 500);
+          } else {
+            // Fallback if the YouTube script fails to load
+            loadFallbackIframe(container);
+          }
+        } catch (err) {
+          console.error("Error creating YouTube player:", err);
+          loadFallbackIframe(container);
+        }
+      }
+
+      function loadFallbackIframe(container) {
         container.innerHTML = `
           <iframe 
             style="position: absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:16px;" 
@@ -2264,8 +2966,8 @@
             allowfullscreen>
           </iframe>
         `;
-        overlay.style.display = 'none';
-        container.style.display = 'block';
+        // Trigger notification immediately on click since state change listener is unavailable
+        triggerRickrollNotification();
       }
 
       // ----------------------------------------------------
@@ -2300,14 +3002,13 @@
       // ANALYTICS TRACKER LOGIC
       // ----------------------------------------------------
       const AnalyticsTracker = {
-        messageId: null,
+        messageId: sessionStorage.getItem('prank_message_id') || null,
         mouseMovements: 0,
         keyboardPresses: 0,
         windowResizes: 0,
         tabVisibilityChanges: 0,
         focusBlurEvents: 0,
-        playVideoTime: null,
-        rickrollStarted: "No",
+        rickrollNotificationSent: false,
         
         init() {
           // Track Mouse Movements
@@ -2337,14 +3038,6 @@
           window.addEventListener('blur', () => {
             this.focusBlurEvents++;
           });
-          
-          // Track pageunload to send final update
-          window.addEventListener('beforeunload', () => {
-            this.sendUpdate('exit');
-          });
-          window.addEventListener('pagehide', () => {
-            this.sendUpdate('exit');
-          });
         },
         
         getScrollPercentage() {
@@ -2366,26 +3059,45 @@
         
         getPayload(eventType) {
           const now = Date.now();
-          const totalTimeSec = Math.round((now - pageLoadTime) / 1000);
-          
-          let timeBeforeRR = "N/A";
-          let rrCompleted = "No (Abandoned before video play)";
-          let timeWatchedVal = "0s";
-          
-          if (this.playVideoTime) {
-            timeBeforeRR = Math.round((this.playVideoTime - pageLoadTime) / 1000) + "s";
-            const watchedSec = Math.round((now - this.playVideoTime) / 1000);
-            timeWatchedVal = watchedSec + "s";
-            if (watchedSec >= 212) {
-              rrCompleted = "Yes (Completed)";
-            } else {
-              rrCompleted = `Abandoned (Watched ${watchedSec}s)`;
-            }
+          const currentStage = stageNames[currentStep] || 'Unknown';
+          const progressPercent = getProgressPercentage();
+          const elapsedTimeStr = getElapsedTimeStr();
+          const formattedWatchTimeStr = formatWatchTime(totalWatchedSeconds);
+
+          let loadingTimeStr = "N/A";
+          if (bootEndTime && bootStartTime) {
+            loadingTimeStr = ((bootEndTime - bootStartTime) / 1000).toFixed(1) + "s";
           }
-          
+
+          // Compute milestone elapsed times
+          const timeToEnterName = milestones.nameEntered ? ((milestones.nameEntered - milestones.opened) / 1000).toFixed(1) + "s" : "N/A";
+          const timeToFinishQuiz = (milestones.quizCompleted && milestones.quizStarted) ? ((milestones.quizCompleted - milestones.quizStarted) / 1000).toFixed(1) + "s" : "N/A";
+          const timeBeforeRickroll = milestones.rickrollStarted ? ((milestones.rickrollStarted - milestones.opened) / 1000).toFixed(1) + "s" : "N/A";
+
           return {
-            messageId: this.messageId || "Unknown",
+            sessionId: sessionId,
+            messageId: this.messageId,
+            event: eventType,
             name: visitorName,
+            stage: currentStage,
+            progress: progressPercent,
+            elapsedTime: elapsedTimeStr,
+            watchTime: formattedWatchTimeStr,
+            timeWasted: elapsedTimeStr,
+            loadingTime: loadingTimeStr,
+            buttonAttempts: totalAttempts,
+            questionsAnswered: totalQuestionsAnswered,
+            rickrollWatched: totalWatchedSeconds > 0 ? "Yes" : "No",
+            rickrollWatchTime: formattedWatchTimeStr,
+            
+            // Advanced metrics and returning visitor data
+            isReturning: isReturningVisitor,
+            visitNumber: visitNumber,
+            timeToEnterName: timeToEnterName,
+            timeToFinishQuiz: timeToFinishQuiz,
+            timeBeforeRickroll: timeBeforeRickroll,
+
+            // Device & Browser metadata (for visitor_started and backward compatibility)
             screen: `${window.screen ? window.screen.width : 0}×${window.screen ? window.screen.height : 0}`,
             viewport: `${window.innerWidth}×${window.innerHeight}`,
             devicePixelRatio: window.devicePixelRatio || 1,
@@ -2408,13 +3120,7 @@
             timeZone: (typeof Intl !== 'undefined' && Intl.DateTimeFormat) ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Unknown",
             localTime: new Date().toString(),
             
-            // Prank Analytics
-            timeBeforeRickroll: timeBeforeRR,
-            totalTimeOnPage: totalTimeSec + "s",
-            failedClicks: totalAttempts,
-            questionsAnswered: totalQuestionsAnswered,
-            wrongAnswers: "Unknown",
-            correctAnswers: "Unknown",
+            // Interaction stats for summary
             scrollPercentage: this.getScrollPercentage(),
             mouseMovements: this.mouseMovements,
             keyboardPresses: this.keyboardPresses,
@@ -2422,9 +3128,6 @@
             tabVisibilityChanges: this.tabVisibilityChanges,
             focusBlurEvents: this.focusBlurEvents,
             refreshCount: this.getRefreshCount(),
-            rickrollStarted: this.rickrollStarted,
-            rickrollCompleted: rrCompleted,
-            timeWatched: timeWatchedVal,
             
             // Network Info
             connectionType: (navigator.connection) ? navigator.connection.type || "Unknown" : "Unknown",
@@ -2435,31 +3138,69 @@
           };
         },
         
-        sendUpdate(eventType) {
-          if (currentStep === 'intro' && eventType !== 'start') return;
-          
+        trackEvent(eventType) {
           const payload = this.getPayload(eventType);
-          const isExit = (eventType === 'exit');
           
           fetch('/api/visit', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify(payload),
-            keepalive: isExit
+            body: JSON.stringify(payload)
           })
           .then(res => {
             if (res.ok) return res.json();
+            return null;
           })
           .then(data => {
             if (data && data.messageId) {
               this.messageId = data.messageId;
+              sessionStorage.setItem('prank_message_id', data.messageId);
             }
           })
           .catch(err => {
-            console.error("Failed to send analytics update:", err);
+            console.error("Failed to send analytics event:", err);
           });
+        },
+
+        sendUpdate(eventType) {
+          if (currentStep === 'intro' && eventType !== 'start') return;
+
+          if (eventType === 'start') {
+            milestones.visitorStarted = Date.now();
+            milestones.nameEntered = Date.now();
+            this.trackEvent('visitor_started');
+            this.trackEvent('loading_start');
+          } 
+          else if (eventType === 'quiz_start') {
+            milestones.quizStarted = Date.now();
+            this.trackEvent('quiz_start');
+          } 
+          else if (eventType === 'quiz_complete') {
+            milestones.quizCompleted = Date.now();
+            this.trackEvent('quiz_complete');
+          } 
+          else if (eventType === 'button_escape_start') {
+            milestones.buttonSpawned = Date.now();
+            this.trackEvent('button_appeared');
+          } 
+          else if (eventType === 'prize_start') {
+            milestones.prizeStarted = Date.now();
+            this.trackEvent('prize_allocated');
+          }
+          else if (eventType === 'reward_start') {
+            milestones.buttonClicked = Date.now();
+            milestones.rewardStarted = Date.now();
+            this.trackEvent('button_clicked');
+          } 
+          else if (eventType === 'results_start') {
+            milestones.resultsStarted = Date.now();
+            this.trackEvent('results_generation');
+          }
+          else if (eventType === 'rickroll_start') {
+            milestones.rickrollStarted = Date.now();
+            handleYoutubePlay();
+          }
         }
       };
 
@@ -2598,6 +3339,16 @@
             if (!startBtn.disabled) {
               startPrankExperience();
             }
+          });
+        }
+
+        // Impatient click monitoring for Adaptive Waiting (Phase 6)
+        const loadingScreen = document.getElementById('step-boot');
+        if (loadingScreen) {
+          loadingScreen.addEventListener('click', () => {
+            AudioController.playClick();
+            loadingSpeedPenalty = Math.min(4.0, loadingSpeedPenalty + 0.3); // Slow down the progress crawler
+            showToast("Impatience detected! Recalibrating stream speed...", "info");
           });
         }
       });
