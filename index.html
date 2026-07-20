@@ -475,8 +475,38 @@
       .btn-escaping {
         position: fixed !important;
         margin: 0 !important;
-        transition: left 0.18s cubic-bezier(0.25, 1, 0.5, 1), top 0.18s cubic-bezier(0.25, 1, 0.5, 1) !important;
+        transition: var(--btn-transition, left 0.18s cubic-bezier(0.25, 1, 0.5, 1), top 0.18s cubic-bezier(0.25, 1, 0.5, 1)) !important;
         z-index: 10000 !important;
+      }
+      
+      @keyframes btn-wiggle {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        20% { transform: translate(-4px, 3px) rotate(-4deg); }
+        40% { transform: translate(4px, -2px) rotate(4deg); }
+        60% { transform: translate(-4px, -3px) rotate(-3deg); }
+        80% { transform: translate(4px, 2px) rotate(3deg); }
+      }
+      
+      .wiggle-active {
+        animation: btn-wiggle 0.15s infinite !important;
+      }
+
+      .floating-bubble {
+        position: fixed;
+        background: rgba(10, 10, 10, 0.9);
+        color: #ffffff;
+        border: 1px solid var(--accent-cyan);
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 600;
+        pointer-events: none;
+        z-index: 10010;
+        opacity: 0;
+        transform: translateY(0) scale(0.9);
+        transition: opacity 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
 
       /* Special Golden/Green glow when capturing is complete */
@@ -1544,7 +1574,11 @@
 
       // Dynamic Troll Engine Targets (Phase 1)
       const targetQuizQuestionsCount = 8 + Math.floor(Math.random() * 4); // random between 8 and 11
-      const targetEscapesCount = 14 + Math.floor(Math.random() * 7); // random between 14 and 20
+      const targetEscapesCount = 15 + Math.floor(Math.random() * 16); // random between 15 and 30 (Phases 10-15)
+      
+      // Dynamic Patience State
+      let patienceRemaining = 100;
+      let patienceStartOfButtonPhase = 100;
 
       // Milestone Timestamps for Advanced Tracking & Analysis (Phase 2)
       const milestones = {
@@ -1981,6 +2015,15 @@
       let errorTimerActive = false;
       let loadingSpeedPenalty = 1.0; // Increases wait time if user is hyperactive or impatient
 
+      // Set patience state helper
+      function setPatience(val) {
+        patienceRemaining = Math.max(0, Math.min(100, val));
+        const pEl = document.getElementById('patience-countdown');
+        if (pEl) {
+          pEl.innerText = `Patience: ${Math.round(patienceRemaining)}%`;
+        }
+      }
+
       // 1. Boot Progress Runner
       function runLoader() {
         if (errorTimerActive) return;
@@ -2122,6 +2165,16 @@
         progressBar.style.width = `${currentProgress.toFixed(1)}%`;
         progressText.innerText = `${currentProgress.toFixed(1)}%`;
 
+        // Calculate dynamic patience remaining
+        let basePatience = 100 - (currentProgress * 0.25);
+        if (hasSimulatedError) {
+          basePatience -= 10;
+        }
+        if (loadingSpeedPenalty > 1.0) {
+          basePatience -= (loadingSpeedPenalty - 1.0) * 20;
+        }
+        setPatience(basePatience);
+
         // Update loading message every 2.4 seconds (6 ticks)
         if (tickCount % 6 === 0 || tickCount === 1) {
           updateLoadingMessage();
@@ -2149,6 +2202,9 @@
         bootEndTime = Date.now();
         AudioController.playSuccess();
         
+        // Unlock professional waiter achievement
+        unlockAchievement('waiter');
+
         // Transition Step 1 -> Step 1.5 (Verification Quiz)
         setTimeout(() => {
           setStepView('verification');
@@ -2343,6 +2399,9 @@
         AudioController.playClick();
         totalQuestionsAnswered++;
 
+        // Deduct patience on each quiz question answered
+        setPatience(patienceRemaining - (2.5 + Math.random() * 2));
+
         // Unlock Certified Human achievement on the 4th question answered
         if (totalQuestionsAnswered === 4) {
           unlockAchievement('human');
@@ -2373,6 +2432,7 @@
               textEl.innerHTML = `<span style="color: var(--accent-green); font-size: 16px; font-weight: 700; letter-spacing: 1px;">Verification Successful ✅</span>`;
               AudioController.playSuccess();
               setTimeout(() => {
+                patienceStartOfButtonPhase = patienceRemaining; // Record starting patience for moving button
                 setStepView('main');
                 AnalyticsTracker.sendUpdate('button_escape_start');
               }, 2000);
@@ -2429,6 +2489,10 @@
           progressBar.style.width = `${rewardProgress}%`;
           progressText.innerText = `${Math.round(rewardProgress)}%`;
 
+          // Linearly decrease patience to 0% by the end of the reward loading phase
+          const rewardPatience = Math.max(0, Math.round(5 - (rewardProgress / 100) * 5));
+          setPatience(rewardPatience);
+
           // Stagger through messages gracefully based on ticks
           const msgsLength = rewardMessages.length;
           const ticksPerMsg = totalTicks / msgsLength;
@@ -2465,10 +2529,61 @@
       let isEscapingEnabled = false;
       let escapeCount = 0;
       let totalAttempts = 0;
+      let isButtonMoving = false;
       const totalEscapesTarget = targetEscapesCount;
       const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
       const btn = document.getElementById('escaping-btn');
+
+      function showButtonDialogue() {
+        const dialogs = [
+          "Too slow! 😜",
+          "Nice try! 🎯",
+          "Not even close! 💨",
+          "Maybe next time... 🕒",
+          "Is that your fastest click? ⚡",
+          "My grandma clicks faster! 👵",
+          "Are you even trying? 🤔",
+          "Oops, over here! 📍",
+          "Missed me! 👻",
+          "Close, but no cigar! 🚬",
+          "Try with your other hand! 🖐️",
+          "Wait, did you blink? 👁️",
+          "Whoosh! 🌬️",
+          "Not today! 🛡️",
+          "Lag? Or just slow? 🛜",
+          "Click harder! 💥",
+          "You're warm, now cold... ❄️",
+          "Deflection shield active! 🛡️"
+        ];
+        const randomText = dialogs[Math.floor(Math.random() * dialogs.length)];
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'floating-bubble';
+        bubble.innerText = randomText;
+        
+        document.body.appendChild(bubble);
+        
+        const rect = btn.getBoundingClientRect();
+        const bubbleX = rect.left + rect.width / 2 - 50 + (Math.random() * 40 - 20);
+        const bubbleY = rect.top - 40 + (Math.random() * 20 - 10);
+        
+        bubble.style.left = `${Math.max(10, Math.min(window.innerWidth - 150, bubbleX))}px`;
+        bubble.style.top = `${Math.max(10, Math.min(window.innerHeight - 40, bubbleY))}px`;
+        
+        setTimeout(() => {
+          bubble.style.opacity = '1';
+          bubble.style.transform = 'translateY(-15px) scale(1.05)';
+        }, 10);
+        
+        setTimeout(() => {
+          bubble.style.opacity = '0';
+          bubble.style.transform = 'translateY(-30px) scale(0.95)';
+          setTimeout(() => {
+            bubble.remove();
+          }, 400);
+        }, 1200);
+      }
 
       // Seamless breakout initialization
       function enableEscaping(initialX, initialY) {
@@ -2494,11 +2609,11 @@
         isEscapingEnabled = true;
       }
 
-      // Calculate screen margin boundaries
-      function getNewCoordinate(currentX, currentY) {
+      // Calculate screen margin boundaries with advanced movement styles
+      function getNewCoordinate(currentX, currentY, style = 'random') {
         const margin = 24;
-        const width = btn.offsetWidth;
-        const height = btn.offsetHeight;
+        const width = btn.offsetWidth || 140;
+        const height = btn.offsetHeight || 44;
         
         const maxX = window.innerWidth - width - margin;
         const maxY = window.innerHeight - height - margin;
@@ -2506,15 +2621,49 @@
         let newX, newY;
         let attempts = 0;
         
-        // Find random spot, but not right under the current pointer position to avoid instant looping
-        do {
-          newX = margin + Math.random() * (maxX - margin);
-          newY = margin + Math.random() * (maxY - margin);
-          attempts++;
-        } while (
-          attempts < 50 && 
-          Math.hypot(newX + width / 2 - currentX, newY + height / 2 - currentY) < 180
-        );
+        if (style === 'short') {
+          // Short distance jump (120px to 250px)
+          do {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 120 + Math.random() * 130;
+            newX = currentX + Math.cos(angle) * dist;
+            newY = currentY + Math.sin(angle) * dist;
+            attempts++;
+          } while (
+            (newX < margin || newX > maxX || newY < margin || newY > maxY) &&
+            attempts < 50
+          );
+          if (attempts >= 50) {
+            newX = margin + Math.random() * (maxX - margin);
+            newY = margin + Math.random() * (maxY - margin);
+          }
+        } else if (style === 'diagonal') {
+          // Move along a diagonal path
+          const directions = [
+            { x: 1, y: 1 },
+            { x: -1, y: 1 },
+            { x: 1, y: -1 },
+            { x: -1, y: -1 }
+          ];
+          const dir = directions[Math.floor(Math.random() * directions.length)];
+          const dist = 220 + Math.random() * 250;
+          newX = currentX + dir.x * dist;
+          newY = currentY + dir.y * dist;
+          
+          // Clamp to screen bounds
+          newX = Math.max(margin, Math.min(maxX, newX));
+          newY = Math.max(margin, Math.min(maxY, newY));
+        } else {
+          // Standard jump (ensure it is far enough from current cursor to feel like a jump)
+          do {
+            newX = margin + Math.random() * (maxX - margin);
+            newY = margin + Math.random() * (maxY - margin);
+            attempts++;
+          } while (
+            attempts < 50 && 
+            Math.hypot(newX + width / 2 - currentX, newY + height / 2 - currentY) < 250
+          );
+        }
         
         return { x: newX, y: newY };
       }
@@ -2527,42 +2676,162 @@
       }
 
       function handleButtonEscape(currentX, currentY, isDoubleJump = false) {
-        if (escapeCount >= totalEscapesTarget) return; // Stays still on 16th approach
+        if (escapeCount >= totalEscapesTarget || isButtonMoving) return;
 
+        isButtonMoving = true;
         enableEscaping(currentX, currentY);
-        escapeCount++;
-        totalAttempts++;
 
-        // Calculate and jump
-        const coord = getNewCoordinate(currentX, currentY);
-        btn.style.left = `${coord.x}px`;
-        btn.style.top = `${coord.y}px`;
+        // Select movement style based on escapeCount and difficulty progression
+        let style = 'random';
+        let speed = 'medium'; // 'slow', 'medium', 'fast'
+        let delay = 0;
+        let isDouble = isDoubleJump;
+        let isOrbit = false;
 
-        AudioController.playWhoosh();
-        shakeScreen();
+        // Difficulty Tuning
+        if (escapeCount <= 3) {
+          // First few dodges: slow, simple, short jumps
+          style = 'short';
+          speed = 'slow';
+        } else if (escapeCount <= totalEscapesTarget - 5) {
+          // Middle dodges: noticeably harder, random mixture
+          const rand = Math.random();
+          if (rand < 0.3) {
+            style = 'short';
+          } else if (rand < 0.6) {
+            style = 'diagonal';
+          } else {
+            style = 'random';
+          }
+          speed = 'medium';
+          
+          if (Math.random() < 0.2) {
+            delay = 200 + Math.random() * 300; // 200ms to 500ms pause before escape
+          }
+        } else {
+          // Final dodges: extremely frustrating but fair
+          const rand = Math.random();
+          if (rand < 0.25) {
+            style = 'diagonal';
+          } else if (rand < 0.5) {
+            isOrbit = true;
+          } else {
+            style = 'random';
+          }
+          speed = 'fast';
 
-        if (isTouchDevice && navigator.vibrate) {
-          // Intense rapid triple-pulse to feel physically jarring and frustrating
-          navigator.vibrate([100, 50, 100, 50, 100]);
+          // Extreme tactics for final phase
+          if (Math.random() < 0.3) {
+            isDouble = true; // Pretend to stop and escape again
+          } else if (Math.random() < 0.25) {
+            delay = 300 + Math.random() * 200; // Pause before escaping
+          }
         }
 
-        // Funny messages & details update
-        updateEscapeUI();
+        // Apply transition timing function based on speed
+        let transitionStr = '';
+        if (speed === 'slow') {
+          transitionStr = 'left 0.45s ease-out, top 0.45s ease-out';
+        } else if (speed === 'fast') {
+          transitionStr = 'left 0.15s cubic-bezier(0.19, 1, 0.22, 1), top 0.15s cubic-bezier(0.19, 1, 0.22, 1)';
+        } else {
+          transitionStr = 'left 0.25s cubic-bezier(0.25, 1, 0.5, 1), top 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
+        }
+        btn.style.setProperty('--btn-transition', transitionStr);
 
-        // Double jump helper for mobile double tap troll
-        if (isDoubleJump) {
-          setTimeout(() => {
-            const coordDouble = getNewCoordinate(coord.x, coord.y);
-            btn.style.left = `${coordDouble.x}px`;
-            btn.style.top = `${coordDouble.y}px`;
+        // Define escape action
+        const performEscape = () => {
+          escapeCount++;
+          totalAttempts++;
+
+          // Unlock HUNTER achievement when totalAttempts reaches 5
+          if (totalAttempts === 5) {
+            unlockAchievement('hunter');
+          }
+
+          if (isOrbit) {
+            // Circle around the cursor / center of button before landing
+            const rect = btn.getBoundingClientRect();
+            const btnCenterX = rect.left + rect.width / 2;
+            const btnCenterY = rect.top + rect.height / 2;
+            
+            // Generate circular orbit path coordinates
+            const radius = 90 + Math.random() * 50;
+            const targetCoord = getNewCoordinate(currentX, currentY, style);
+            
+            // First jump to an intermediate orbital angle
+            const orbitAngle = Math.random() * Math.PI * 2;
+            const orbitX = btnCenterX + Math.cos(orbitAngle) * radius;
+            const orbitY = btnCenterY + Math.sin(orbitAngle) * radius;
+            
+            btn.style.left = `${orbitX}px`;
+            btn.style.top = `${orbitY}px`;
+            
             AudioController.playWhoosh();
+            showButtonDialogue();
+
+            // Then complete the slide to final target
+            setTimeout(() => {
+              btn.style.left = `${targetCoord.x}px`;
+              btn.style.top = `${targetCoord.y}px`;
+              AudioController.playWhoosh();
+              shakeScreen();
+              
+              setTimeout(() => {
+                isButtonMoving = false;
+                updateEscapeUI();
+              }, speed === 'fast' ? 150 : 250);
+            }, 100);
+          } else {
+            // Normal coordinate jump
+            const coord = getNewCoordinate(currentX, currentY, style);
+            btn.style.left = `${coord.x}px`;
+            btn.style.top = `${coord.y}px`;
+
+            AudioController.playWhoosh();
+            shakeScreen();
+            showButtonDialogue();
+
             if (isTouchDevice && navigator.vibrate) {
-              // Heavier dual-blast alarm pattern for the double-jump troll
-              navigator.vibrate([150, 50, 150, 50, 150]);
+              navigator.vibrate([80, 40, 80]);
             }
-            totalAttempts++;
-            updateEscapeUI();
-          }, 150);
+
+            // If it's a double-jump (pretend to stop before escaping again)
+            if (isDouble) {
+              setTimeout(() => {
+                const coordDouble = getNewCoordinate(coord.x, coord.y, 'random');
+                btn.style.setProperty('--btn-transition', 'left 0.14s cubic-bezier(0.19, 1, 0.22, 1), top 0.14s cubic-bezier(0.19, 1, 0.22, 1)');
+                btn.style.left = `${coordDouble.x}px`;
+                btn.style.top = `${coordDouble.y}px`;
+                
+                AudioController.playWhoosh();
+                escapeCount++;
+                totalAttempts++;
+                updateEscapeUI();
+                
+                setTimeout(() => {
+                  isButtonMoving = false;
+                }, 150);
+              }, 240); // Jump again after 240ms
+            } else {
+              // Standard complete
+              setTimeout(() => {
+                isButtonMoving = false;
+                updateEscapeUI();
+              }, speed === 'slow' ? 450 : speed === 'fast' ? 150 : 250);
+            }
+          }
+        };
+
+        // If there's an artificial pause/delay, wiggle the button first
+        if (delay > 0) {
+          btn.classList.add('wiggle-active');
+          setTimeout(() => {
+            btn.classList.remove('wiggle-active');
+            performEscape();
+          }, delay);
+        } else {
+          performEscape();
         }
       }
 
@@ -2577,22 +2846,26 @@
         document.getElementById('escape-progress-bar').style.width = `${progressPercentage}%`;
         document.getElementById('escape-count-label').innerText = `Escapes: ${escapeCount}/${totalEscapesTarget}`;
         
-        // Patience calculation
-        const patience = Math.max(0, 100 - Math.round((escapeCount / totalEscapesTarget) * 100));
-        document.getElementById('patience-countdown').innerText = `Patience: ${patience}%`;
+        // Patience calculation mapped linearly from starting patience to 5%
+        const startPat = patienceStartOfButtonPhase;
+        const progressRatio = escapeCount / totalEscapesTarget;
+        const currentPatience = Math.max(5, Math.round(startPat - progressRatio * (startPat - 5)));
+        setPatience(currentPatience);
 
         // Check if loading double-tap troll for mobile
         if (isTouchDevice && escapeCount >= 10) {
           document.getElementById('bonus-troll-tip').style.display = 'block';
         }
 
-        // Check if captured (it stays still on the 16th approach)
-        if (escapeCount === totalEscapesTarget) {
+        // Check if captured
+        if (escapeCount >= totalEscapesTarget) {
+          // Unlock Infinite Patience achievement
+          unlockAchievement('infinite');
+
           setTimeout(() => {
             sub.innerText = "System overloaded. You broke me. Click CONTINUE now.";
             sub.style.color = "var(--accent-green)";
             btn.classList.add('btn-captured');
-            // Remove icon to show standard success or keep icon
             btn.innerHTML = `Continue <i data-lucide="award"></i>`;
             lucide.createIcons();
             showToast("System Tired. Click Continue Now!", "success");
@@ -2600,18 +2873,11 @@
         }
       }
 
-      // Proximity event checking (for desktop)
+      // Desktop Click/Mousedown handling (to trigger escape instantly on click attempt)
       if (!isTouchDevice) {
-        window.addEventListener('mousemove', (e) => {
-          if (currentStep !== 'main' || escapeCount >= totalEscapesTarget) return;
-
-          const rect = btn.getBoundingClientRect();
-          // Find distance from mouse cursor to button bounding box
-          const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
-          const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
-          const distance = Math.hypot(dx, dy);
-
-          if (distance < 100) {
+        btn.addEventListener('mousedown', (e) => {
+          if (escapeCount < totalEscapesTarget) {
+            e.preventDefault();
             handleButtonEscape(e.clientX, e.clientY, false);
           }
         });
@@ -2634,7 +2900,7 @@
             handleButtonEscape(touch.clientX, touch.clientY, false);
           }
         } else {
-          // Captures successful click when it stays still on 16th approach
+          // Captures successful click when it stays still on final approach
           triggerCaptureClick();
         }
       });
@@ -2644,7 +2910,13 @@
         if (escapeCount >= totalEscapesTarget) {
           triggerCaptureClick();
         } else {
-          // Desktop pointer clicks shouldn't succeed if escape count is not done
+          e.preventDefault();
+        }
+      });
+
+      // Prevent Spacebar/Enter key triggers on the escaping button while it's active
+      btn.addEventListener('keydown', (e) => {
+        if (escapeCount < totalEscapesTarget) {
           e.preventDefault();
         }
       });
@@ -2872,21 +3144,20 @@
         animateValue('stat-messages', 0, totalMessagesSeen, 1200, false);
         animateValue('stat-failed-clicks', 0, totalAttempts, 1200, false);
         
-        // Count patience remaining down to critical deficit (random value 0-5%)
+        // Count patience remaining down to 0% (Patience Fully Depleted)
         const patienceVal = document.getElementById('stat-patience-left');
         if (patienceVal) {
           let patiencePct = 100;
-          const targetPatience = Math.floor(Math.random() * 6); // 0-5%
           const countdownTimer = setInterval(() => {
             patiencePct -= 2;
-            if (patiencePct <= targetPatience) {
+            if (patiencePct <= 0) {
               clearInterval(countdownTimer);
-              patienceVal.innerText = `${targetPatience}% (Depleted)`;
+              patienceVal.innerText = "Patience Fully Depleted";
               patienceVal.classList.add('text-red');
             } else {
               patienceVal.innerText = `${patiencePct}%`;
             }
-          }, 20);
+          }, 15);
         }
       }
 
@@ -3221,6 +3492,9 @@
         
         // Log victim info asynchronously
         AnalyticsTracker.sendUpdate('start');
+
+        // Unlock trust level 100% achievement
+        unlockAchievement('trust');
 
         // Personalize other screens
         const bootSubtitle = document.querySelector('#step-boot .subtitle');
